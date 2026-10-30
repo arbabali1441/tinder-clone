@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const INITIAL_PROFILES = [
   { 
@@ -126,7 +126,8 @@ export default function App() {
     }, 2500);
   };
 
-  const handleSwipe = (direction) => {
+  const handleSwipe = useCallback((direction) => {
+    if (currentIndex >= filteredProfiles.length) return;
     const profile = filteredProfiles[currentIndex];
     setHistory(prev => [...prev, { index: currentIndex, photoIndex: currentPhotoIndex, profile }]);
     
@@ -143,15 +144,36 @@ export default function App() {
     
     setCurrentIndex((prev) => prev + 1);
     setCurrentPhotoIndex(0);
-  };
+  }, [currentIndex, filteredProfiles, currentPhotoIndex]);
 
-  const handleRewind = () => {
+  const handleRewind = useCallback(() => {
     if (history.length === 0) return;
     const lastAction = history[history.length - 1];
     setHistory(prev => prev.slice(0, prev.length - 1));
     setCurrentIndex(lastAction.index);
     setCurrentPhotoIndex(lastAction.photoIndex);
-  };
+  }, [history]);
+
+  // Keyboard Shortcuts Listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (currentTab !== 'swipe' || showEditProfileModal || showFilterModal || showMatchModal || showFullProfileModal) return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowLeft') {
+        handleSwipe('left');
+      } else if (e.key === 'ArrowRight') {
+        handleSwipe('right');
+      } else if (e.key === 'ArrowUp') {
+        handleSwipe('super');
+      } else if (e.key === 'ArrowDown') {
+        handleRewind();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentTab, showEditProfileModal, showFilterModal, showMatchModal, showFullProfileModal, handleSwipe, handleRewind]);
 
   const nextPhoto = (e) => {
     e.stopPropagation();
@@ -301,10 +323,10 @@ export default function App() {
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', paddingBottom: '6px' }}>
-                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '16px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind">⏪</button>
-                    <button onClick={() => handleSwipe('left')} style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>❌</button>
-                    <button onClick={() => handleSwipe('super')} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like">⭐</button>
-                    <button onClick={() => handleSwipe('right')} style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
+                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '16px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind (↓ Key)">⏪</button>
+                    <button onClick={() => handleSwipe('left')} style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Dislike (← Key)">❌</button>
+                    <button onClick={() => handleSwipe('super')} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like (↑ Key)">⭐</button>
+                    <button onClick={() => handleSwipe('right')} style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }} title="Like (→ Key)">❤️</button>
                   </div>
                 </>
               ) : (
