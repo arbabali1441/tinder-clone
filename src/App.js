@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 const INITIAL_PROFILES = [
-  { id: 1, name: 'Jessica', age: 25, distance: 3, bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
-  { id: 2, name: 'Michael', age: 27, distance: 8, bio: 'Software developer by day, guitarist by night 🎸. Always down for live music or a food adventure.', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80' },
-  { id: 3, name: 'Sophia', age: 24, distance: 2, bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80' },
-  { id: 4, name: 'David', age: 29, distance: 12, bio: 'Architect and photography enthusiast 📸. Let us grab a drink and talk about city designs.', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80' }
+  { id: 1, name: 'Jessica', age: 25, distance: 3, bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️', 'Photography 📸'], image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
+  { id: 2, name: 'Michael', age: 27, distance: 8, bio: 'Software developer by day, guitarist by night 🎸. Always down for live music or a food adventure.', interests: ['Coding 💻', 'Guitar 🎸', 'Live Music 🎶', 'Burgers 🍔'], image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80' },
+  { id: 3, name: 'Sophia', age: 24, distance: 2, bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', interests: ['Hiking 🥾', 'Fitness 💪', 'Sunsets 🌅', 'Yoga 🧘‍♀️'], image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80' },
+  { id: 4, name: 'David', age: 29, distance: 12, bio: 'Architect and photography enthusiast 📸. Let us grab a drink and talk about city designs.', interests: ['Architecture 🏛️', 'Design ✨', 'Wine 🍷', 'Running 🏃‍♂️'], image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80' }
 ];
 
 const ICEBREAKERS = [
@@ -75,7 +75,6 @@ export default function App() {
     setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), newMsg] }));
     setInputText('');
 
-    // Simulate Match typing and reply
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
@@ -123,24 +122,31 @@ export default function App() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
               {currentIndex < filteredProfiles.length ? (
                 <>
-                  <div style={{ width: '100%', height: '460px', borderRadius: '20px', overflow: 'hidden', position: 'relative', backgroundColor: '#27272a', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-                    <img src={filteredProfiles[currentIndex].image} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.2), transparent)', padding: '24px 16px 16px 16px', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ width: '100%', height: '440px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: '#27272a', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                    <img src={filteredProfiles[currentIndex].image} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '280px', objectFit: 'cover' }} />
+                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', backgroundColor: '#18181b' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <h2 style={{ fontSize: '26px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name},</h2>
-                        <span style={{ fontSize: '20px', fontWeight: '300' }}>{filteredProfiles[currentIndex].age}</span>
+                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name},</h2>
+                        <span style={{ fontSize: '18px', fontWeight: '300' }}>{filteredProfiles[currentIndex].age}</span>
                       </div>
-                      <p style={{ fontSize: '13px', color: '#d4d4d8', margin: '4px 0 6px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
-                      <p style={{ fontSize: '12px', color: '#e4e4e7', background: 'rgba(0,0,0,0.5)', padding: '8px 10px', borderRadius: '10px', margin: 0, backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.1)' }}>{filteredProfiles[currentIndex].bio}</p>
+                      <p style={{ fontSize: '12px', color: '#d4d4d8', margin: '4px 0 8px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
+                      <p style={{ fontSize: '12px', color: '#e4e4e7', margin: '0 0 10px 0', lineHeight: '1.4' }}>{filteredProfiles[currentIndex].bio}</p>
+                      
+                      {/* Interest Badges */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {filteredProfiles[currentIndex].interests.map((tag, i) => (
+                          <span key={i} style={{ fontSize: '11px', backgroundColor: '#27272a', border: '1px solid #3f3f46', padding: '4px 10px', borderRadius: '20px', color: '#d4d4d8' }}>{tag}</span>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
                   {/* Swipe Action Buttons */}
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', paddingBottom: '10px' }}>
-                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '18px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind">⏪</button>
-                    <button onClick={() => handleSwipe('left')} style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>❌</button>
-                    <button onClick={() => handleSwipe('super')} style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like">⭐</button>
-                    <button onClick={() => handleSwipe('right')} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', paddingBottom: '6px' }}>
+                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '16px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind">⏪</button>
+                    <button onClick={() => handleSwipe('left')} style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>❌</button>
+                    <button onClick={() => handleSwipe('super')} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like">⭐</button>
+                    <button onClick={() => handleSwipe('right')} style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
                   </div>
                 </>
               ) : (
