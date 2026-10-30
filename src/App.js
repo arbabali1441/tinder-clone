@@ -32,6 +32,7 @@ export default function App() {
   
   const filteredProfiles = INITIAL_PROFILES.filter(p => p.distance <= maxDistance);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [history, setHistory] = useState([]); // For Rewind feature
   const [matches, setMatches] = useState([]);
   const [activeMatch, setActiveMatch] = useState(null);
   const [messages, setMessages] = useState({});
@@ -41,12 +42,21 @@ export default function App() {
 
   const handleSwipe = (direction) => {
     const profile = filteredProfiles[currentIndex];
-    if (direction === 'right') {
+    setHistory(prev => [...prev, { index: currentIndex, profile }]);
+    
+    if (direction === 'right' || direction === 'super') {
       setMatches((prev) => [...prev, profile]);
       setMatchedProfile(profile);
       setShowMatchModal(true);
     }
     setCurrentIndex((prev) => prev + 1);
+  };
+
+  const handleRewind = () => {
+    if (history.length === 0) return;
+    const lastAction = history[history.length - 1];
+    setHistory(prev => prev.slice(0, prev.length - 1));
+    setCurrentIndex(lastAction.index);
   };
 
   const sendMessage = () => {
@@ -95,21 +105,24 @@ export default function App() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
               {currentIndex < filteredProfiles.length ? (
                 <>
-                  <div style={{ width: '100%', height: '500px', borderRadius: '20px', overflow: 'hidden', position: 'relative', backgroundColor: '#27272a', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                  <div style={{ width: '100%', height: '460px', borderRadius: '20px', overflow: 'hidden', position: 'relative', backgroundColor: '#27272a', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
                     <img src={filteredProfiles[currentIndex].image} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.2), transparent)', padding: '24px 16px 16px 16px', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <h2 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name},</h2>
-                        <span style={{ fontSize: '22px', fontWeight: '300' }}>{filteredProfiles[currentIndex].age}</span>
+                        <h2 style={{ fontSize: '26px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name},</h2>
+                        <span style={{ fontSize: '20px', fontWeight: '300' }}>{filteredProfiles[currentIndex].age}</span>
                       </div>
-                      <p style={{ fontSize: '14px', color: '#d4d4d8', margin: '4px 0 8px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
-                      <p style={{ fontSize: '13px', color: '#e4e4e7', background: 'rgba(0,0,0,0.5)', padding: '10px 12px', borderRadius: '12px', margin: 0, backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.1)' }}>{filteredProfiles[currentIndex].bio}</p>
+                      <p style={{ fontSize: '13px', color: '#d4d4d8', margin: '4px 0 6px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
+                      <p style={{ fontSize: '12px', color: '#e4e4e7', background: 'rgba(0,0,0,0.5)', padding: '8px 10px', borderRadius: '10px', margin: 0, backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.1)' }}>{filteredProfiles[currentIndex].bio}</p>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', paddingBottom: '10px' }}>
-                    <button onClick={() => handleSwipe('left')} style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>❌</button>
-                    <button onClick={() => handleSwipe('right')} style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
+                  {/* Swipe Action Buttons */}
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', paddingBottom: '10px' }}>
+                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '18px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind">⏪</button>
+                    <button onClick={() => handleSwipe('left')} style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>❌</button>
+                    <button onClick={() => handleSwipe('super')} style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like">⭐</button>
+                    <button onClick={() => handleSwipe('right')} style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
                   </div>
                 </>
               ) : (
@@ -117,7 +130,7 @@ export default function App() {
                   <span style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</span>
                   <h3 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 8px 0' }}>No more profiles in this range!</h3>
                   <p style={{ fontSize: '14px', color: '#a1a1aa', margin: '0 0 24px 0' }}>Try increasing your distance filter or reset deck.</p>
-                  <button onClick={() => setCurrentIndex(0)} style={{ padding: '12px 24px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
+                  <button onClick={() => { setCurrentIndex(0); setHistory([]); }} style={{ padding: '12px 24px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
                 </div>
               )}
             </div>
