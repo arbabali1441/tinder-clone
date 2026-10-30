@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const INITIAL_PROFILES = [
   { id: 1, name: 'Jessica', age: 25, distance: 3, bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️', 'Photography 📸'], image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
@@ -22,12 +22,24 @@ const AUTO_REPLIES = [
 ];
 
 export default function App() {
+  const [theme, setTheme] = useState('dark');
   const [currentTab, setCurrentTab] = useState('swipe');
   const [maxDistance, setMaxDistance] = useState(10);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
 
-  // User Profile State
+  // Dynamic Theme Palette
+  const isDark = theme === 'dark';
+  const colors = {
+    bg: isDark ? '#09090b' : '#f4f4f5',
+    cardBg: isDark ? '#121214' : '#ffffff',
+    headerBg: isDark ? '#18181b' : '#f4f4f5',
+    border: isDark ? '#27272a' : '#e4e4e7',
+    text: isDark ? '#ffffff' : '#09090b',
+    subText: isDark ? '#a1a1aa' : '#71717a',
+    pillBg: isDark ? '#27272a' : '#e4e4e7'
+  };
+
   const [userProfile, setUserProfile] = useState({
     name: 'Alex',
     age: 25,
@@ -95,11 +107,11 @@ export default function App() {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#09090b', fontFamily: 'system-ui, sans-serif', color: '#fff', margin: 0 }}>
-      <div style={{ width: '100%', maxWidth: '420px', height: '100%', maxHeight: '850px', backgroundColor: '#121214', borderRadius: '24px', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', border: '1px solid #27272a', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: colors.bg, fontFamily: 'system-ui, sans-serif', color: colors.text, margin: 0, transition: 'all 0.3s ease' }}>
+      <div style={{ width: '100%', maxWidth: '420px', height: '100%', maxHeight: '850px', backgroundColor: colors.cardBg, borderRadius: '24px', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', border: `1px solid ${colors.border}`, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)' }}>
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #27272a', backgroundColor: '#18181b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.headerBg }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '24px' }}>🔥</span>
             <span style={{ fontSize: '22px', fontWeight: '800', background: 'linear-gradient(to right, #f43f5e, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '0.5px' }}>tinder</span>
@@ -122,38 +134,36 @@ export default function App() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
               {currentIndex < filteredProfiles.length ? (
                 <>
-                  <div style={{ width: '100%', height: '440px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: '#27272a', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                  <div style={{ width: '100%', height: '440px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                     <img src={filteredProfiles[currentIndex].image} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '280px', objectFit: 'cover' }} />
-                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', backgroundColor: '#18181b' }}>
+                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', backgroundColor: colors.cardBg }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name},</h2>
-                        <span style={{ fontSize: '18px', fontWeight: '300' }}>{filteredProfiles[currentIndex].age}</span>
+                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: colors.text }}>{filteredProfiles[currentIndex].name},</h2>
+                        <span style={{ fontSize: '18px', fontWeight: '300', color: colors.subText }}>{filteredProfiles[currentIndex].age}</span>
                       </div>
-                      <p style={{ fontSize: '12px', color: '#d4d4d8', margin: '4px 0 8px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
-                      <p style={{ fontSize: '12px', color: '#e4e4e7', margin: '0 0 10px 0', lineHeight: '1.4' }}>{filteredProfiles[currentIndex].bio}</p>
+                      <p style={{ fontSize: '12px', color: colors.subText, margin: '4px 0 8px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
+                      <p style={{ fontSize: '12px', color: colors.text, margin: '0 0 10px 0', lineHeight: '1.4' }}>{filteredProfiles[currentIndex].bio}</p>
                       
-                      {/* Interest Badges */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                         {filteredProfiles[currentIndex].interests.map((tag, i) => (
-                          <span key={i} style={{ fontSize: '11px', backgroundColor: '#27272a', border: '1px solid #3f3f46', padding: '4px 10px', borderRadius: '20px', color: '#d4d4d8' }}>{tag}</span>
+                          <span key={i} style={{ fontSize: '11px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, padding: '4px 10px', borderRadius: '20px', color: colors.text }}>{tag}</span>
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  {/* Swipe Action Buttons */}
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', paddingBottom: '6px' }}>
-                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '16px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind">⏪</button>
-                    <button onClick={() => handleSwipe('left')} style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>❌</button>
-                    <button onClick={() => handleSwipe('super')} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: '#18181b', border: '1px solid #3f3f46', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like">⭐</button>
+                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '16px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind">⏪</button>
+                    <button onClick={() => handleSwipe('left')} style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>❌</button>
+                    <button onClick={() => handleSwipe('super')} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like">⭐</button>
                     <button onClick={() => handleSwipe('right')} style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
                   </div>
                 </>
               ) : (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px' }}>
                   <span style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</span>
-                  <h3 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 8px 0' }}>No more profiles in this range!</h3>
-                  <p style={{ fontSize: '14px', color: '#a1a1aa', margin: '0 0 24px 0' }}>Try increasing your distance filter or reset deck.</p>
+                  <h3 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 8px 0', color: colors.text }}>No more profiles in this range!</h3>
+                  <p style={{ fontSize: '14px', color: colors.subText, margin: '0 0 24px 0' }}>Try increasing your distance filter or reset deck.</p>
                   <button onClick={() => { setCurrentIndex(0); setHistory([]); }} style={{ padding: '12px 24px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
                 </div>
               )}
@@ -165,7 +175,7 @@ export default function App() {
             <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#f43f5e', marginBottom: '12px' }}>Your Matches ({matches.length})</h3>
               {matches.length === 0 ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#71717a', textAlign: 'center' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: colors.subText, textAlign: 'center' }}>
                   <span style={{ fontSize: '40px', marginBottom: '8px' }}>💬</span>
                   <p style={{ fontSize: '14px' }}>No matches yet. Keep swiping right!</p>
                 </div>
@@ -176,7 +186,7 @@ export default function App() {
                       <div style={{ width: '64px', height: '64px', borderRadius: '50%', padding: '2px', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
                         <img src={m.image} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                       </div>
-                      <span style={{ fontSize: '12px', marginTop: '6px', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                      <span style={{ fontSize: '12px', marginTop: '6px', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: colors.text }}>{m.name}</span>
                     </div>
                   ))}
                 </div>
@@ -186,37 +196,37 @@ export default function App() {
 
           {/* CHAT TAB */}
           {currentTab === 'chat' && activeMatch && (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#09090b' }}>
-              <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', backgroundColor: '#18181b', borderBottom: '1px solid #27272a' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: colors.bg }}>
+              <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', backgroundColor: colors.headerBg, borderBottom: `1px solid ${colors.border}` }}>
                 <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', color: '#f43f5e', fontWeight: 'bold', cursor: 'pointer', marginRight: '12px', fontSize: '14px' }}>← Back</button>
                 <img src={activeMatch.image} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', marginRight: '10px' }} />
                 <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 'bold', margin: 0 }}>{activeMatch.name}</h4>
+                  <h4 style={{ fontSize: '14px', fontWeight: 'bold', margin: 0, color: colors.text }}>{activeMatch.name}</h4>
                   <span style={{ fontSize: '11px', color: '#34d399' }}>● Online</span>
                 </div>
               </div>
               <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ backgroundColor: '#27272a', padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', color: '#d4d4d8' }}>You matched with {activeMatch.name}! Say something nice. ✨</div>
+                <div style={{ backgroundColor: colors.pillBg, padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', color: colors.text }}>You matched with {activeMatch.name}! Say something nice. ✨</div>
                 {(messages[activeMatch.id] || []).map((msg, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', backgroundColor: msg.sender === 'me' ? '#f43f5e' : '#27272a', color: '#fff' }}>{msg.text}</div>
+                    <div style={{ padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', backgroundColor: msg.sender === 'me' ? '#f43f5e' : colors.pillBg, color: '#fff' }}>{msg.text}</div>
                   </div>
                 ))}
                 {isTyping && (
                   <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                    <div style={{ padding: '8px 12px', borderRadius: '16px', backgroundColor: '#27272a', color: '#a1a1aa', fontSize: '12px', fontStyle: 'italic' }}>{activeMatch.name} is typing...</div>
+                    <div style={{ padding: '8px 12px', borderRadius: '16px', backgroundColor: colors.pillBg, color: colors.subText, fontSize: '12px', fontStyle: 'italic' }}>{activeMatch.name} is typing...</div>
                   </div>
                 )}
               </div>
               
-              <div style={{ padding: '8px 16px', backgroundColor: '#121214', borderTop: '1px solid #27272a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ padding: '8px 16px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <button onClick={generateAIIcebreaker} style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   ✨ Generate AI Icebreaker
                 </button>
               </div>
 
-              <div style={{ padding: '12px', backgroundColor: '#18181b', borderTop: '1px solid #27272a', display: 'flex', gap: '8px' }}>
-                <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} style={{ flex: 1, backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: '#fff', outline: 'none' }} />
+              <div style={{ padding: '12px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px' }}>
+                <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: colors.text, outline: 'none' }} />
                 <button onClick={sendMessage} style={{ padding: '10px 20px', borderRadius: '20px', backgroundColor: '#f43f5e', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Send</button>
               </div>
             </div>
@@ -228,14 +238,20 @@ export default function App() {
               <div style={{ width: '100px', height: '100px', borderRadius: '50%', padding: '3px', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', marginBottom: '16px', boxShadow: '0 8px 20px rgba(0,0,0,0.4)' }}>
                 <img src={userProfile.image} alt="User Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
               </div>
-              <h2 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{userProfile.name}, {userProfile.age}</h2>
-              <p style={{ fontSize: '13px', color: '#a1a1aa', margin: '0 0 16px 0' }}>{userProfile.location}</p>
+              <h2 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 4px 0', color: colors.text }}>{userProfile.name}, {userProfile.age}</h2>
+              <p style={{ fontSize: '13px', color: colors.subText, margin: '0 0 16px 0' }}>{userProfile.location}</p>
               
-              <button onClick={() => { setTempName(userProfile.name); setTempAge(userProfile.age); setShowEditProfileModal(true); }} style={{ padding: '8px 20px', borderRadius: '20px', backgroundColor: '#27272a', color: '#f43f5e', border: '1px solid #3f3f46', fontWeight: '600', cursor: 'pointer', fontSize: '13px', marginBottom: '24px' }}>Edit Profile</button>
+              <button onClick={() => { setTempName(userProfile.name); setTempAge(userProfile.age); setShowEditProfileModal(true); }} style={{ padding: '8px 20px', borderRadius: '20px', backgroundColor: colors.pillBg, color: '#f43f5e', border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '13px', marginBottom: '24px' }}>Edit Profile</button>
 
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '14px' }}>Subscription</span><span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.1)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(244,63,94,0.2)' }}>Tinder Gold ✨</span></div>
-                <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '14px' }}>Global Discovery</span><span style={{ fontSize: '12px', fontWeight: 'bold', color: '#34d399' }}>Active</span></div>
+                <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '14px', color: colors.text }}>App Theme</span>
+                  <button onClick={() => setTheme(isDark ? 'light' : 'dark')} style={{ padding: '6px 12px', borderRadius: '20px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, color: colors.text, fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    {isDark ? '🌙 Dark Mode' : '☀️ Light Mode'}
+                  </button>
+                </div>
+                <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '14px', color: colors.text }}>Subscription</span><span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.1)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(244,63,94,0.2)' }}>Tinder Gold ✨</span></div>
+                <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '14px', color: colors.text }}>Global Discovery</span><span style={{ fontSize: '12px', fontWeight: 'bold', color: '#34d399' }}>Active</span></div>
               </div>
             </div>
           )}
@@ -244,20 +260,20 @@ export default function App() {
 
         {/* EDIT PROFILE MODAL */}
         {showEditProfileModal && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-            <div style={{ backgroundColor: '#18181b', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px', borderTop: '1px solid #27272a' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <div style={{ backgroundColor: colors.headerBg, borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px', borderTop: `1px solid ${colors.border}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>Edit Profile</h3>
-                <button onClick={() => setShowEditProfileModal(false)} style={{ background: 'none', border: 'none', color: '#a1a1aa', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, color: colors.text }}>Edit Profile</h3>
+                <button onClick={() => setShowEditProfileModal(false)} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '18px', cursor: 'pointer' }}>✕</button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Name</label>
-                  <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '14px', outline: 'none' }} />
+                  <label style={{ fontSize: '12px', color: colors.subText, display: 'block', marginBottom: '6px' }}>Name</label>
+                  <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text, fontSize: '14px', outline: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Age</label>
-                  <input type="number" value={tempAge} onChange={(e) => setTempAge(e.target.value)} style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '14px', outline: 'none' }} />
+                  <label style={{ fontSize: '12px', color: colors.subText, display: 'block', marginBottom: '6px' }}>Age</label>
+                  <input type="number" value={tempAge} onChange={(e) => setTempAge(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text, fontSize: '14px', outline: 'none' }} />
                 </div>
               </div>
               <button onClick={saveProfile} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>Save Changes</button>
@@ -267,14 +283,14 @@ export default function App() {
 
         {/* DISTANCE FILTER MODAL */}
         {showFilterModal && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-            <div style={{ backgroundColor: '#18181b', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px', borderTop: '1px solid #27272a' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <div style={{ backgroundColor: colors.headerBg, borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px', borderTop: `1px solid ${colors.border}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>Maximum Distance</h3>
-                <button onClick={() => setShowFilterModal(false)} style={{ background: 'none', border: 'none', color: '#a1a1aa', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, color: colors.text }}>Maximum Distance</h3>
+                <button onClick={() => setShowFilterModal(false)} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '18px', cursor: 'pointer' }}>✕</button>
               </div>
               <div style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#a1a1aa', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: colors.subText, marginBottom: '8px' }}>
                   <span>Up to</span>
                   <span style={{ fontWeight: 'bold', color: '#f43f5e' }}>{maxDistance} km</span>
                 </div>
