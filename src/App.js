@@ -51,13 +51,6 @@ const INITIAL_PROFILES = [
   }
 ];
 
-const ICEBREAKERS = [
-  "Coffee or tea? This is the ultimate test ☕",
-  "If you could travel anywhere right now, where are we going? ✈️",
-  "What is your go-to weekend adventure? 🌄",
-  "Pineapple on pizza: absolute crime or underrated genius? 🍕"
-];
-
 const GIF_LIST = [
   "https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif",
   "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif",
@@ -67,14 +60,14 @@ const GIF_LIST = [
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('tinder_auth') === 'true');
-  const [authMode, setAuthMode] = useState('welcome');
+  const [authMode, setAuthMode] = useState('welcome'); // 'welcome' | 'signin' | 'signup'
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   
   const [theme, setTheme] = useState(() => localStorage.getItem('tinder_theme') || 'dark');
   const [currentTab, setCurrentTab] = useState('swipe');
   
-  // Filters & GPS
   const [maxDistance, setMaxDistance] = useState(10000);
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(35);
@@ -83,39 +76,17 @@ export default function App() {
   const [superLikesLeft, setSuperLikesLeft] = useState(3);
   const [currentCity, setCurrentCity] = useState({ name: 'Dubai, UAE', lat: 25.2048, lng: 55.2708 });
 
-  // Blind Date Mode
   const [isBlindDateMode, setIsBlindDateMode] = useState(false);
-
-  // Monetization & Boost
-  const [isBoostActive, setIsBoostActive] = useState(false);
-  const [boostTimer, setBoostTimer] = useState(0);
-  const [showGoldModal, setShowGoldModal] = useState(false);
-
-  // Modals & UI
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const [showPassportModal, setShowPassportModal] = useState(false);
-  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
-  const [showChatMenu, setShowChatMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [showFullProfileModal, setShowFullProfileModal] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [swipeBadge, setSwipeBadge] = useState(null);
 
-  // Call States
   const [activeCall, setActiveCall] = useState(false);
   const [callStatus, setCallStatus] = useState('Ringing...');
-  const [callTimer, setCallTimer] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isSpeaker, setIsSpeaker] = useState(false);
 
-  // Audio Recording
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordTime, setRecordTime] = useState(0);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-
-  // Profile & Data (with Verification status & Spotify)
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('tinder_profile');
     return saved ? JSON.parse(saved) : {
@@ -128,9 +99,6 @@ export default function App() {
       image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80'
     };
   });
-  const [tempName, setTempName] = useState(userProfile.name);
-  const [tempBio, setTempBio] = useState(userProfile.bio);
-  const [tempSpotify, setTempSpotify] = useState(userProfile.spotify);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -144,7 +112,6 @@ export default function App() {
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState(null);
 
-  // Sync LocalStorage
   useEffect(() => { localStorage.setItem('tinder_auth', isAuthenticated); }, [isAuthenticated]);
   useEffect(() => { localStorage.setItem('tinder_theme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('tinder_profile', JSON.stringify(userProfile)); }, [userProfile]);
@@ -152,10 +119,9 @@ export default function App() {
   useEffect(() => { localStorage.setItem('tinder_messages', JSON.stringify(messages)); }, [messages]);
 
   const showToast = (msg) => {
-    setToasts(msg);
+    setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2200);
   };
-  const setToasts = (msg) => setToastMessage(msg);
 
   const triggerBadge = (type) => {
     setSwipeBadge(type);
@@ -179,18 +145,45 @@ export default function App() {
     return matchesDistance && matchesAge && matchesGender && matchesSearch;
   });
 
-  const handleLoginSubmit = () => {
+  const handleAuthSubmit = () => {
     if (!emailOrPhone || !password) {
-      showToast("⚠️ Enter credentials");
+      showToast("⚠️ Please fill in all required fields");
       return;
     }
-    setIsAuthenticated(true);
-    showToast("🎉 Welcome to Tinder!");
+    if (authMode === 'signup') {
+      if (!fullName) {
+        showToast("⚠️ Please enter your full name");
+        return;
+      }
+      // Save new registered user
+      const newUser = { ...userProfile, name: fullName };
+      setUserProfile(newUser);
+      localStorage.setItem(`user_${emailOrPhone}`, JSON.stringify({ password, profile: newUser }));
+      setIsAuthenticated(true);
+      showToast("🎉 Account created successfully!");
+    } else {
+      // Sign In check
+      const savedUser = localStorage.getItem(`user_${emailOrPhone}`);
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.password === password) {
+          setUserProfile(parsed.profile);
+          setIsAuthenticated(true);
+          showToast("🎉 Logged in successfully!");
+          return;
+        } else {
+          showToast("❌ Incorrect password");
+          return;
+        }
+      }
+      // Fallback for demo login if user hasn't registered yet
+      setIsAuthenticated(true);
+      showToast("🎉 Logged in successfully!");
+    }
   };
 
-  // Profile completion percentage calculation
   const calculateProfileCompletion = () => {
-    let score = 40; // Base photo & name
+    let score = 40;
     if (userProfile.bio) score += 20;
     if (userProfile.verified) score += 25;
     if (userProfile.spotify) score += 15;
@@ -199,44 +192,8 @@ export default function App() {
 
   const verifyProfile = () => {
     setUserProfile(prev => ({ ...prev, verified: true }));
-    showToast("✅ Profile Verified Successfully with Blue Tick! 🎉");
+    showToast("✅ Profile Verified Successfully with Blue Tick!");
   };
-
-  const startRecording = async () => {
-    audioChunksRef.current = [];
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      mediaRecorderRef.current.ondataavailable = e => audioChunksRef.current.push(e.data);
-      mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        sendMsgObj({ isVoice: true, audioUrl: url, duration: `${recordTime || 3}s`, text: `Voice Note (${recordTime || 3}s)` });
-      };
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-      setRecordTime(0);
-    } catch {
-      setIsRecording(true);
-      setRecordTime(0);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
-    } else {
-      sendMsgObj({ isVoice: true, text: 'Voice Note (3s)' });
-    }
-    setIsRecording(false);
-  };
-
-  useEffect(() => {
-    let interval;
-    if (isRecording) interval = setInterval(() => setRecordTime(p => p + 1), 1000);
-    return () => clearInterval(interval);
-  }, [isRecording]);
 
   const sendMsgObj = (msgData) => {
     if (!activeMatch) return;
@@ -294,14 +251,6 @@ export default function App() {
     setCurrentPhotoIndex(0);
   }, [currentIndex, filteredProfiles, currentPhotoIndex, superLikesLeft]);
 
-  const handleRewind = useCallback(() => {
-    if (history.length === 0) return;
-    const last = history[history.length - 1];
-    setHistory(prev => prev.slice(0, prev.length - 1));
-    setCurrentIndex(last.index);
-    setCurrentPhotoIndex(last.photoIndex);
-  }, [history]);
-
   const isDark = theme === 'dark';
   const colors = {
     bg: isDark ? '#09090b' : '#f4f4f5',
@@ -333,34 +282,49 @@ export default function App() {
         
         {!isAuthenticated ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 24px', backgroundColor: colors.cardBg, textAlign: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '30px' }}>
-              <span style={{ fontSize: '56px', marginBottom: '12px' }}>🔥</span>
-              <h1 style={{ fontSize: '32px', fontWeight: '900', background: 'linear-gradient(to right, #f43f5e, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 8px 0' }}>tinder</h1>
-              <p style={{ fontSize: '14px', color: colors.subText, margin: 0 }}>Verified Dating & Blind Date Discovery</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
+              <span style={{ fontSize: '48px', marginBottom: '8px' }}>🔥</span>
+              <h1 style={{ fontSize: '28px', fontWeight: '900', background: 'linear-gradient(to right, #f43f5e, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 6px 0' }}>tinder</h1>
+              <p style={{ fontSize: '13px', color: colors.subText, margin: 0 }}>Find your perfect match today</p>
             </div>
 
             {authMode === 'welcome' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-                <button onClick={() => setAuthMode('login')} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>🔐 Sign In / Register</button>
-                <button onClick={() => setIsAuthenticated(true)} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '15px' }}>⚡ Quick Demo Login</button>
+                <button onClick={() => setAuthMode('signup')} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>📝 Create Account (Sign Up)</button>
+                <button onClick={() => setAuthMode('signin')} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '15px' }}>🔐 Sign In (Log In)</button>
+                <button onClick={() => setIsAuthenticated(true)} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '12px', cursor: 'pointer', marginTop: '4px' }}>⚡ Quick Demo Entry</button>
               </div>
             )}
 
-            {authMode === 'login' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', textAlign: 'left' }}>
+            {(authMode === 'signin' || authMode === 'signup') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', textAlign: 'left' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 4px 0', textAlign: 'center', color: colors.text }}>
+                  {authMode === 'signup' ? 'Create New Account' : 'Welcome Back'}
+                </h3>
+
+                {authMode === 'signup' && (
+                  <div>
+                    <label style={{ fontSize: '11px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Full Name</label>
+                    <input type="text" placeholder="Alex Ali" value={fullName} onChange={(e) => setFullName(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '10px', color: colors.text, fontSize: '13px' }} />
+                  </div>
+                )}
+
                 <div>
-                  <label style={{ fontSize: '12px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Email or Phone</label>
-                  <input type="text" placeholder="user@tinder.com" value={emailOrPhone} onChange={(e) => setEmailOrPhone(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text }} />
+                  <label style={{ fontSize: '11px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Email or Phone</label>
+                  <input type="text" placeholder="user@tinder.com" value={emailOrPhone} onChange={(e) => setEmailOrPhone(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '10px', color: colors.text, fontSize: '13px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Password</label>
-                  <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text }} />
+                  <label style={{ fontSize: '11px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Password</label>
+                  <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '10px', color: colors.text, fontSize: '13px' }} />
                 </div>
-                <button onClick={handleLoginSubmit} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }}>Continue</button>
-                <button onClick={() => setAuthMode('welcome')} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '13px', cursor: 'pointer', textAlign: 'center' }}>Back</button>
+
+                <button onClick={handleAuthSubmit} style={{ width: '100%', padding: '13px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}>
+                  {authMode === 'signup' ? 'Sign Up' : 'Log In'}
+                </button>
+                <button onClick={() => setAuthMode('welcome')} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '12px', cursor: 'pointer', textAlign: 'center' }}>← Back to options</button>
               </div>
             )}
-            <div style={{ fontSize: '12px', color: colors.subText }}>Secure JWT Session Active</div>
+            <div style={{ fontSize: '11px', color: colors.subText }}>Secure Authentication System</div>
           </div>
         ) : (
           <>
@@ -373,7 +337,7 @@ export default function App() {
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 {currentTab === 'swipe' && (
                   <>
-                    <button onClick={() => setIsBlindDateMode(!isBlindDateMode)} style={{ background: isBlindDateMode ? '#3b82f6' : colors.pillBg, border: 'none', padding: '4px 8px', borderRadius: '12px', fontSize: '11px', color: isBlindDateMode ? '#fff' : colors.text, cursor: 'pointer' }} title="Blind Date Mode">🕶️ Blind</button>
+                    <button onClick={() => setIsBlindDateMode(!isBlindDateMode)} style={{ background: isBlindDateMode ? '#3b82f6' : colors.pillBg, border: 'none', padding: '4px 8px', borderRadius: '12px', fontSize: '11px', color: isBlindDateMode ? '#fff' : colors.text, cursor: 'pointer' }}>🕶️ Blind</button>
                     <button onClick={() => setShowPassportModal(true)} style={{ background: 'none', border: `1px solid ${colors.border}`, padding: '4px 8px', borderRadius: '12px', fontSize: '11px', color: colors.text, cursor: 'pointer' }}>📍 {currentCity.name.split(',')[0]}</button>
                   </>
                 )}
@@ -390,7 +354,6 @@ export default function App() {
               {/* SWIPE TAB */}
               {currentTab === 'swipe' && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '14px' }}>
-                  
                   {currentIndex < filteredProfiles.length ? (
                     <>
                       <div style={{ width: '100%', height: '390px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
@@ -471,7 +434,7 @@ export default function App() {
                       <img src={activeMatch.images[0]} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
                       <h4 style={{ fontSize: '13px', margin: 0 }}>{activeMatch.name}</h4>
                     </div>
-                    <button onClick={() => setShowReportModal(true)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '14px', cursor: 'pointer' }} title="Report / Unmatch">⚠️</button>
+                    <button onClick={() => setShowReportModal(true)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '14px', cursor: 'pointer' }}>⚠️</button>
                   </div>
 
                   <div style={{ flex: 1, padding: '14px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -480,7 +443,6 @@ export default function App() {
                         <div style={{ padding: '8px 12px', borderRadius: '14px', maxWidth: '80%', fontSize: '12px', backgroundColor: msg.sender === 'me' ? '#f43f5e' : colors.pillBg, color: '#fff' }}>
                           {msg.image ? <img src={msg.image} alt="" style={{ width: '150px', borderRadius: '8px' }} /> : msg.text}
                         </div>
-                        {msg.sender === 'me' && <span style={{ fontSize: '9px', color: colors.subText, marginTop: '2px' }}>{msg.read ? '✓✓ Read' : '✓ Sent'}</span>}
                       </div>
                     ))}
                     {isTyping && (
@@ -511,7 +473,6 @@ export default function App() {
                 <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <img src={userProfile.image} alt="" style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #f43f5e', marginBottom: '8px' }} />
                   
-                  {/* Profile Completion Bar */}
                   <div style={{ width: '100%', backgroundColor: colors.pillBg, borderRadius: '10px', height: '8px', overflow: 'hidden', margin: '8px 0 4px 0' }}>
                     <div style={{ width: `${calculateProfileCompletion()}%`, backgroundColor: '#34d399', height: '100%' }}></div>
                   </div>
@@ -535,14 +496,14 @@ export default function App() {
           </>
         )}
 
-        {/* REPORT / UNMATCH MODAL */}
+        {/* REPORT MODAL */}
         {showReportModal && (
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
             <div style={{ backgroundColor: colors.headerBg, borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 12px 0' }}>Report or Unmatch</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                 {['Inappropriate messages', 'Fake profile or spam', 'Underage user', 'Just want to unmatch'].map((reason, i) => (
-                  <button key={i} onClick={() => { setMatches(prev => prev.filter(m => m.id !== activeMatch.id)); setActiveMatch(null); setShowReportModal(false); setCurrentTab('matches'); showToast("🚫 User unmatched successfully"); }} style={{ padding: '12px', borderRadius: '12px', backgroundColor: colors.pillBg, color: colors.text, border: 'none', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer' }}>{reason}</button>
+                  <button key={i} onClick={() => { setMatches(prev => prev.filter(m => m.id !== activeMatch.id)); setActiveMatch(null); setShowReportModal(false); setCurrentTab('matches'); showToast("🚫 User unmatched"); }} style={{ padding: '12px', borderRadius: '12px', backgroundColor: colors.pillBg, color: colors.text, border: 'none', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer' }}>{reason}</button>
                 ))}
               </div>
               <button onClick={() => setShowReportModal(false)} style={{ width: '100%', padding: '12px', borderRadius: '20px', backgroundColor: colors.pillBg, border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
