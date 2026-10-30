@@ -109,6 +109,7 @@ export default function App() {
   const [tempName, setTempName] = useState(userProfile.name);
   const [tempAge, setTempAge] = useState(userProfile.age);
   const [tempBio, setTempBio] = useState(userProfile.bio);
+  const [tempImage, setTempImage] = useState(userProfile.image);
   
   const filteredProfiles = INITIAL_PROFILES.filter(p => {
     const matchesDistance = p.distance <= maxDistance;
@@ -140,6 +141,17 @@ export default function App() {
     setTimeout(() => {
       setSwipeBadge(null);
     }, 600);
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTempImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSwipe = useCallback((direction) => {
@@ -182,7 +194,6 @@ export default function App() {
     setCurrentPhotoIndex(lastAction.photoIndex);
   }, [history]);
 
-  // Keyboard Shortcuts Listener
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (currentTab !== 'swipe' || showEditProfileModal || showFilterModal || showMatchModal || showFullProfileModal) return;
@@ -255,7 +266,7 @@ export default function App() {
   };
 
   const saveProfile = () => {
-    setUserProfile(prev => ({ ...prev, name: tempName, age: Number(tempAge), bio: tempBio }));
+    setUserProfile(prev => ({ ...prev, name: tempName, age: Number(tempAge), bio: tempBio, image: tempImage }));
     setShowEditProfileModal(false);
     showToast("✅ Profile updated successfully!");
   };
@@ -310,7 +321,6 @@ export default function App() {
           {currentTab === 'swipe' && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
               
-              {/* Search Filter & Super Likes Counter Bar */}
               <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center' }}>
                 <input 
                   type="text" 
@@ -328,7 +338,6 @@ export default function App() {
                 <>
                   <div style={{ width: '100%', height: '380px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                     
-                    {/* Dynamic Action Stamp Overlay Badges */}
                     {swipeBadge === 'LIKE' && (
                       <div style={{ position: 'absolute', top: '40px', left: '20px', border: '4px solid #22c55e', color: '#22c55e', padding: '4px 16px', borderRadius: '12px', fontSize: '32px', fontWeight: '900', letterSpacing: '2px', zIndex: 100, animation: 'popBadge 0.6s ease forwards' }}>LIKE</div>
                     )}
@@ -342,7 +351,6 @@ export default function App() {
                     <div style={{ position: 'relative', width: '100%', height: '230px', cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
                       <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       
-                      {/* Status & Activity Badge */}
                       <div style={{ position: 'absolute', top: '20px', left: '12px', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 10 }}>
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: filteredProfiles[currentIndex].status.includes('Online') ? '#34d399' : '#facc15' }}></span>
                         <span style={{ fontSize: '11px', color: '#fff', fontWeight: '500' }}>{filteredProfiles[currentIndex].status}</span>
@@ -482,7 +490,7 @@ export default function App() {
               <p style={{ fontSize: '13px', color: colors.subText, margin: '0 0 8px 0' }}>{userProfile.location}</p>
               <p style={{ fontSize: '12px', color: colors.text, textAlign: 'center', padding: '0 16px', margin: '0 0 16px 0', fontStyle: 'italic' }}>"{userProfile.bio}"</p>
               
-              <button onClick={() => { setTempName(userProfile.name); setTempAge(userProfile.age); setTempBio(userProfile.bio); setShowEditProfileModal(true); }} style={{ padding: '8px 20px', borderRadius: '20px', backgroundColor: colors.pillBg, color: '#f43f5e', border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '13px', marginBottom: '24px' }}>Edit Profile</button>
+              <button onClick={() => { setTempName(userProfile.name); setTempAge(userProfile.age); setTempBio(userProfile.bio); setTempImage(userProfile.image); setShowEditProfileModal(true); }} style={{ padding: '8px 20px', borderRadius: '20px', backgroundColor: colors.pillBg, color: '#f43f5e', border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '13px', marginBottom: '24px' }}>Edit Profile</button>
 
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -536,12 +544,21 @@ export default function App() {
         {/* EDIT PROFILE MODAL */}
         {showEditProfileModal && (
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-            <div style={{ backgroundColor: colors.headerBg, borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px', borderTop: `1px solid ${colors.border}` }}>
+            <div style={{ backgroundColor: colors.headerBg, borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px', borderTop: `1px solid ${colors.border}`, maxHeight: '90%', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, color: colors.text }}>Edit Profile</h3>
                 <button onClick={() => setShowEditProfileModal(false)} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '18px', cursor: 'pointer' }}>✕</button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #f43f5e' }}>
+                    <img src={tempImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <label htmlFor="photo-upload" style={{ fontSize: '12px', color: '#f43f5e', fontWeight: 'bold', cursor: 'pointer', backgroundColor: 'rgba(244,63,94,0.1)', padding: '6px 14px', borderRadius: '16px', border: '1px solid rgba(244,63,94,0.3)' }}>
+                    📷 Upload New Photo
+                  </label>
+                  <input id="photo-upload" type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                </div>
                 <div>
                   <label style={{ fontSize: '12px', color: colors.subText, display: 'block', marginBottom: '6px' }}>Name</label>
                   <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text, fontSize: '14px', outline: 'none' }} />
