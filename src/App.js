@@ -6,6 +6,8 @@ const INITIAL_PROFILES = [
     name: 'Jessica', 
     age: 25, 
     gender: 'female',
+    zodiac: 'Scorpio ♏',
+    intent: 'Long-term partner 💍',
     lat: 25.2048, lng: 55.2708,
     verified: true,
     status: 'Active recently',
@@ -15,6 +17,7 @@ const INITIAL_PROFILES = [
     bio: 'Coffee addict ☕, art lover, and weekend traveler.', 
     interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️'], 
     spotify: 'Taylor Swift - Cruel Summer',
+    poll: { question: "Guess my favorite travel destination?", options: ["Paris", "Tokyo", "Bali"], answer: 1 },
     prompts: { q: "My simple pleasures...", a: "Fresh morning coffee and sunset drives 🌅" },
     storyVideo: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-lights-41642-large.mp4',
     images: [
@@ -27,6 +30,8 @@ const INITIAL_PROFILES = [
     name: 'Michael', 
     age: 27, 
     gender: 'male',
+    zodiac: 'Leo ♌',
+    intent: 'Casual dating 🥂',
     lat: 40.7128, lng: -74.0060,
     verified: false,
     status: 'Active 2h ago',
@@ -36,6 +41,7 @@ const INITIAL_PROFILES = [
     bio: 'Software developer by day, guitarist by night 🎸.', 
     interests: ['Coding 💻', 'Guitar 🎸', 'Tech 🚀'], 
     spotify: 'The Weeknd - Starboy',
+    poll: { question: "Cats or Dogs?", options: ["Cats", "Dogs", "Both"], answer: 1 },
     prompts: { q: "I'm looking for...", a: "Someone to jam with and try new burgers 🍔" },
     storyVideo: 'https://assets.mixkit.co/videos/preview/mixkit-man-working-on-his-laptop-in-a-cafe-43085-large.mp4',
     images: [
@@ -48,6 +54,8 @@ const INITIAL_PROFILES = [
     name: 'Sophia', 
     age: 24, 
     gender: 'female',
+    zodiac: 'Aries ♈',
+    intent: 'New friends 👋',
     lat: 51.5074, lng: -0.1278,
     verified: true,
     status: 'Online now ✨',
@@ -57,6 +65,7 @@ const INITIAL_PROFILES = [
     bio: 'Sunset chaser 🌅 and fitness enthusiast.', 
     interests: ['Hiking 🥾', 'Fitness 💪', 'Nature 🌲'], 
     spotify: 'Dua Lipa - Levitating',
+    poll: { question: "Morning or Night person?", options: ["Morning", "Night", "Both"], answer: 0 },
     prompts: { q: "Together, we could...", a: "Explore hidden hiking trails and conquer mountains ⛰️" },
     storyVideo: 'https://assets.mixkit.co/videos/preview/mixkit-woman-doing-yoga-in-a-living-room-42867-large.mp4',
     images: [
@@ -93,27 +102,37 @@ export default function App() {
   const [fullName, setFullName] = useState('');
   
   const [theme, setTheme] = useState(() => localStorage.getItem('tinder_theme') || 'dark');
-  const [accentColor, setAccentColor] = useState(() => localStorage.getItem('tinder_accent') || '#f43f5e'); // #f43f5e (Tinder), #eab308 (Bumble), #8b5cf6 (Hinge)
+  const [accentColor, setAccentColor] = useState(() => localStorage.getItem('tinder_accent') || '#f43f5e');
   const [currentTab, setCurrentTab] = useState('swipe');
   
   const [maxDistance, setMaxDistance] = useState(10000);
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(35);
   const [genderFilter, setGenderFilter] = useState('all');
+  const [zodiacFilter, setZodiacFilter] = useState('All');
+  const [intentFilter, setIntentFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentCity, setCurrentCity] = useState({ name: 'Dubai, UAE', lat: 25.2048, lng: 55.2708 });
 
   // Swipe Limits & Countdown Timer
   const [swipesLeft, setSwipesLeft] = useState(45);
-  const [resetTimer, setResetTimer] = useState(43200); // 12 hours in seconds
+  const [resetTimer, setResetTimer] = useState(43200);
 
-  // New Features
+  // New Features States
   const [isIncognito, setIsIncognito] = useState(false);
   const [activeStory, setActiveStory] = useState(null);
   const [activeVideoCall, setActiveVideoCall] = useState(false);
+  const [arFilter, setArFilter] = useState('none'); // 'none' | 'sunglasses' | 'hearts'
   const [blockedUsers, setBlockedUsers] = useState(() => JSON.parse(localStorage.getItem('tinder_blocked') || '[]'));
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [selectedLounge, setSelectedLounge] = useState('All');
+  const [pollAnswers, setPollAnswers] = useState({});
+
+  // Voice Note Recording
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordTime, setRecordTime] = useState(0);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const [isBlindDateMode, setIsBlindDateMode] = useState(false);
   const [showPassportModal, setShowPassportModal] = useState(false);
@@ -128,6 +147,8 @@ export default function App() {
       name: 'Alex Ali',
       age: 26,
       verified: false,
+      zodiac: 'Scorpio ♏',
+      intent: 'Long-term partner 💍',
       location: 'Dubai, UAE',
       bio: 'Building full-stack web applications and exploring Dubai 🚀',
       spotify: 'The Weeknd - Blinding Lights',
@@ -155,7 +176,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem('tinder_messages', JSON.stringify(messages)); }, [messages]);
   useEffect(() => { localStorage.setItem('tinder_blocked', JSON.stringify(blockedUsers)); }, [blockedUsers]);
 
-  // Swipe reset timer countdown
   useEffect(() => {
     const interval = setInterval(() => {
       setResetTimer(prev => (prev > 0 ? prev - 1 : 43200));
@@ -191,6 +211,8 @@ export default function App() {
   const filteredProfiles = INITIAL_PROFILES.filter(p => {
     if (blockedUsers.includes(p.id)) return false;
     if (selectedLounge !== 'All' && p.lounge !== selectedLounge) return false;
+    if (zodiacFilter !== 'All' && !p.zodiac.includes(zodiacFilter)) return false;
+    if (intentFilter !== 'All' && !p.intent.includes(intentFilter)) return false;
     const dist = calculateDistance(currentCity.lat, currentCity.lng, p.lat, p.lng);
     const matchesDistance = dist <= maxDistance;
     const matchesAge = p.age >= minAge && p.age <= maxAge;
@@ -229,6 +251,43 @@ export default function App() {
     showToast("🤖 AI suggested an icebreaker!");
   };
 
+  // Voice Note Recording with Waveform
+  const startRecording = async () => {
+    audioChunksRef.current = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current.ondataavailable = e => audioChunksRef.current.push(e.data);
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        sendMsgObj({ isVoice: true, audioUrl: url, duration: `${recordTime || 3}s` });
+      };
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setRecordTime(0);
+    } catch {
+      setIsRecording(true);
+      setRecordTime(0);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+    } else {
+      sendMsgObj({ isVoice: true, duration: '3s' });
+    }
+    setIsRecording(false);
+  };
+
+  useEffect(() => {
+    let interval;
+    if (isRecording) interval = setInterval(() => setRecordTime(p => p + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
   const sendMsgObj = (msgData) => {
     if (!activeMatch) return;
     const matchId = activeMatch.id;
@@ -266,7 +325,7 @@ export default function App() {
 
   const handleSwipe = useCallback((direction) => {
     if (swipesLeft <= 0) {
-      showToast(`⚠️ Daily swipe limit reached! Resets in ${formatCountdown(resetTimer)}`);
+      showToast(`⚠️ Daily limit reached! Resets in ${formatCountdown(resetTimer)}`);
       return;
     }
     if (currentIndex >= filteredProfiles.length) return;
@@ -314,6 +373,7 @@ export default function App() {
         @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(-20px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
         @keyframes popBadge { 0% { transform: scale(0.5) rotate(-15deg); opacity: 0; } 50% { transform: scale(1.1) rotate(-15deg); opacity: 1; } 100% { transform: scale(1) rotate(-15deg); opacity: 0; } }
         @keyframes pulseDot { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+        @keyframes waveAnim { 0% { height: 4px; } 50% { height: 20px; } 100% { height: 4px; } }
       `}</style>
       
       {toastMessage && (
@@ -395,21 +455,28 @@ export default function App() {
               {currentTab === 'swipe' && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '12px' }}>
                   
-                  {/* Explore Lounges & Swipe Limit Counter */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <div style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
-                      {['All', 'Coffee Dates ☕', 'Thrill Seekers 🚀', 'Foodies 🍕'].map(lounge => (
-                        <button key={lounge} onClick={() => setSelectedLounge(lounge)} style={{ whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '12px', fontSize: '10px', backgroundColor: selectedLounge === lounge ? colors.accent : colors.pillBg, color: selectedLounge === lounge ? '#fff' : colors.text, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{lounge}</button>
-                      ))}
-                    </div>
-                    <span style={{ fontSize: '10px', color: colors.subText, whiteSpace: 'nowrap' }}>⚡ {swipesLeft} left ({formatCountdown(resetTimer)})</span>
+                  {/* Smart Filters (Zodiac & Intent) */}
+                  <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+                    <select value={zodiacFilter} onChange={(e) => setZodiacFilter(e.target.value)} style={{ backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '4px 8px', fontSize: '10px', outline: 'none' }}>
+                      <option value="All">Zodiac: All</option>
+                      <option value="Scorpio">Scorpio ♏</option>
+                      <option value="Leo">Leo ♌</option>
+                      <option value="Aries">Aries ♈</option>
+                    </select>
+                    <select value={intentFilter} onChange={(e) => setIntentFilter(e.target.value)} style={{ backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '4px 8px', fontSize: '10px', outline: 'none' }}>
+                      <option value="All">Intent: All</option>
+                      <option value="Long-term">Long-term 💍</option>
+                      <option value="Casual">Casual 🥂</option>
+                      <option value="friends">Friends 👋</option>
+                    </select>
+                    <span style={{ fontSize: '10px', color: colors.subText, whiteSpace: 'nowrap', marginLeft: 'auto' }}>⚡ {swipesLeft} left ({formatCountdown(resetTimer)})</span>
                   </div>
 
                   {/* Stories Tray */}
                   <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
                     {INITIAL_PROFILES.map(p => (
                       <div key={p.id} onClick={() => setActiveStory(p)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                        <div style={{ width: '50px', height: '50px', borderRadius: '50%', padding: '2px', background: colors.accent }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', padding: '2px', background: colors.accent }}>
                           <img src={p.images[0]} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                         </div>
                         <span style={{ fontSize: '10px', marginTop: '2px', color: colors.text }}>{p.name}</span>
@@ -419,11 +486,11 @@ export default function App() {
 
                   {currentIndex < filteredProfiles.length ? (
                     <>
-                      <div style={{ width: '100%', height: '340px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                      <div style={{ width: '100%', height: '330px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                         {swipeBadge === 'LIKE' && <div style={{ position: 'absolute', top: '30px', left: '20px', border: '4px solid #22c55e', color: '#22c55e', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>LIKE</div>}
-                        {swipeBadge === 'NOPE' && <div style={{ position: 'absolute', top: '30px', right: '20px', border: '4px solid #ef4444', color: '#ef4444', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>NOPE</div>}
+                        {swipeBadge === 'NOPE' && <div style={{ position: 'absolute', top: '30px', right: '20px', border: '4px solid #ef4444', color: '#ef4444', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: '100', animation: 'popBadge 0.5s ease forwards' }}>NOPE</div>}
 
-                        <div style={{ position: 'relative', width: '100%', height: '190px', filter: isBlindDateMode ? 'blur(16px)' : 'none', transition: 'filter 0.3s' }}>
+                        <div style={{ position: 'relative', width: '100%', height: '180px', filter: isBlindDateMode ? 'blur(16px)' : 'none', transition: 'filter 0.3s' }}>
                           <img src={filteredProfiles[currentIndex].images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           {isBlindDateMode && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', background: 'rgba(0,0,0,0.4)', fontSize: '13px' }}>🔒 Blind Date Active</div>}
                           <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '10px', fontSize: '11px', color: '#34d399', fontWeight: 'bold' }}>⚡ {filteredProfiles[currentIndex].matchScore} Match</div>
@@ -432,12 +499,18 @@ export default function App() {
                         <div style={{ padding: '10px 12px', backgroundColor: colors.cardBg }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name}, {filteredProfiles[currentIndex].age}</h2>
-                            {filteredProfiles[currentIndex].verified && <span style={{ backgroundColor: '#3b82f6', color: '#fff', fontSize: '9px', padding: '2px 5px', borderRadius: '8px' }}>✓ Verified</span>}
+                            <span style={{ fontSize: '10px', backgroundColor: colors.pillBg, padding: '2px 6px', borderRadius: '8px' }}>{filteredProfiles[currentIndex].zodiac}</span>
                           </div>
-                          <p style={{ fontSize: '11px', color: colors.subText, margin: '2px 0 4px 0' }}>👥 {filteredProfiles[currentIndex].mutualFriends} Mutual Friends • 🎵 {filteredProfiles[currentIndex].spotify}</p>
+                          <p style={{ fontSize: '11px', color: colors.subText, margin: '2px 0 4px 0' }}>🎯 {filteredProfiles[currentIndex].intent} • 🎵 {filteredProfiles[currentIndex].spotify}</p>
+                          
+                          {/* Interactive Poll */}
                           <div style={{ backgroundColor: colors.pillBg, padding: '6px 8px', borderRadius: '8px', fontSize: '11px', margin: '4px 0' }}>
-                            <span style={{ color: colors.accent, fontWeight: 'bold' }}>{filteredProfiles[currentIndex].prompts.q}</span>
-                            <div style={{ fontWeight: '500' }}>"{filteredProfiles[currentIndex].prompts.a}"</div>
+                            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>📊 {filteredProfiles[currentIndex].poll.question}</div>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              {filteredProfiles[currentIndex].poll.options.map((opt, i) => (
+                                <button key={i} onClick={() => setPollAnswers(prev => ({ ...prev, [filteredProfiles[currentIndex].id]: i }))} style={{ flex: 1, padding: '4px', borderRadius: '6px', backgroundColor: pollAnswers[filteredProfiles[currentIndex].id] === i ? colors.accent : colors.cardBg, color: pollAnswers[filteredProfiles[currentIndex].id] === i ? '#fff' : colors.text, border: `1px solid ${colors.border}`, fontSize: '10px', cursor: 'pointer' }}>{opt}</button>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -450,8 +523,8 @@ export default function App() {
                   ) : (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px' }}>
                       <span style={{ fontSize: '44px', marginBottom: '8px' }}>🎉</span>
-                      <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>No more profiles!</h3>
-                      <button onClick={() => setCurrentIndex(0)} style={{ marginTop: '16px', padding: '10px 20px', borderRadius: '20px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
+                      <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>No more profiles match filters!</h3>
+                      <button onClick={() => { setZodiacFilter('All'); setIntentFilter('All'); setCurrentIndex(0); }} style={{ marginTop: '16px', padding: '10px 20px', borderRadius: '20px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Filters</button>
                     </div>
                   )}
                 </div>
@@ -511,7 +584,21 @@ export default function App() {
                     {(messages[activeMatch.id] || []).map(msg => (
                       <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'me' ? 'flex-end' : 'flex-start' }}>
                         <div style={{ padding: '8px 12px', borderRadius: '14px', maxWidth: '80%', fontSize: '12px', backgroundColor: msg.sender === 'me' ? colors.accent : colors.pillBg, color: '#fff', position: 'relative' }}>
-                          {msg.image ? <img src={msg.image} alt="" style={{ width: '150px', borderRadius: '8px' }} /> : msg.text}
+                          {msg.image ? (
+                            <img src={msg.image} alt="" style={{ width: '150px', borderRadius: '8px' }} />
+                          ) : msg.isVoice ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '120px' }}>
+                              <span>▶️</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', height: '20px' }}>
+                                {[4, 12, 18, 8, 14, 20, 10, 16, 6].map((h, i) => (
+                                  <div key={i} style={{ width: '3px', height: `${h}px`, backgroundColor: '#fff', borderRadius: '2px', animation: 'waveAnim 1.2s infinite ease-in-out' }} />
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '10px' }}>{msg.duration}</span>
+                            </div>
+                          ) : (
+                            msg.text
+                          )}
                           {msg.reaction && <span style={{ position: 'absolute', bottom: '-10px', right: msg.sender === 'me' ? '0' : 'auto', left: msg.sender === 'me' ? 'auto' : '0', backgroundColor: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '1px 4px', fontSize: '10px' }}>{msg.reaction}</span>}
                         </div>
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>
@@ -545,9 +632,19 @@ export default function App() {
                   </div>
 
                   <div style={{ padding: '10px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button onClick={() => setShowGifPicker(!showGifPicker)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }}>🎨</button>
-                    <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '18px', padding: '8px 14px', fontSize: '12px', color: colors.text, outline: 'none' }} />
-                    <button onClick={() => sendMessage(inputText)} style={{ background: colors.accent, color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '18px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Send</button>
+                    {isRecording ? (
+                      <div style={{ flex: '1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>Recording {recordTime}s...</span>
+                        <button onClick={stopRecording} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '10px', padding: '4px 10px', fontSize: '11px' }}>Send</button>
+                      </div>
+                    ) : (
+                      <>
+                        <button onClick={() => setShowGifPicker(!showGifPicker)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }}>🎨</button>
+                        <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '18px', padding: '8px 14px', fontSize: '12px', color: colors.text, outline: 'none' }} />
+                        <button onClick={startRecording} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }} title="Record Voice">🎙️</button>
+                        <button onClick={() => sendMessage(inputText)} style={{ background: colors.accent, color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '18px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Send</button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -562,7 +659,6 @@ export default function App() {
 
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     
-                    {/* Theme & Accent Customizer */}
                     <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '12px 14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '13px', fontWeight: 'bold' }}>App Theme</span>
                       <button onClick={() => setTheme(isDark ? 'light' : 'dark')} style={{ padding: '6px 12px', borderRadius: '14px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', color: colors.text }}>
@@ -583,7 +679,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Verification Button */}
                     {!userProfile.verified ? (
                       <button onClick={() => setShowVerificationModal(true)} style={{ width: '100%', padding: '12px', borderRadius: '20px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>✓ Verify Profile (Live Selfie Pose)</button>
                     ) : (
@@ -631,21 +726,28 @@ export default function App() {
           </div>
         )}
 
-        {/* IN-APP VIDEO CALL MODAL */}
+        {/* IN-APP VIDEO CALL MODAL WITH AR FILTERS */}
         {activeVideoCall && activeMatch && (
           <div style={{ position: 'absolute', inset: 0, backgroundColor: '#09090b', zIndex: 800, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 20px' }}>
             <div style={{ textAlign: 'center' }}>
               <h3 style={{ color: '#fff', margin: 0, fontSize: '20px' }}>Video Call with {activeMatch.name}</h3>
               <span style={{ fontSize: '12px', color: '#34d399' }}>Connected (HD)</span>
             </div>
-            <div style={{ width: '100%', height: '380px', borderRadius: '20px', overflow: 'hidden', backgroundColor: '#18181b', position: 'relative' }}>
+            
+            <div style={{ width: '100%', height: '340px', borderRadius: '20px', overflow: 'hidden', backgroundColor: '#18181b', position: 'relative' }}>
               <img src={activeMatch.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {arFilter === 'sunglasses' && <div style={{ position: 'absolute', top: '35%', left: '32%', fontSize: '48px' }}>🕶️</div>}
+              {arFilter === 'hearts' && <div style={{ position: 'absolute', top: '25%', left: '40%', fontSize: '48px' }}>💖</div>}
+
               <div style={{ position: 'absolute', bottom: '16px', right: '16px', width: '90px', height: '120px', borderRadius: '12px', backgroundColor: '#27272a', border: '2px solid #fff', overflow: 'hidden' }}>
                 <img src={userProfile.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-              <button onClick={() => setActiveVideoCall(false)} style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', fontSize: '20px', cursor: 'pointer' }}>📞</button>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+              <button onClick={() => setArFilter(arFilter === 'sunglasses' ? 'none' : 'sunglasses')} style={{ padding: '8px 12px', borderRadius: '14px', backgroundColor: arFilter === 'sunglasses' ? colors.accent : '#27272a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '12px' }}>🕶️ Glasses</button>
+              <button onClick={() => setArFilter(arFilter === 'hearts' ? 'none' : 'hearts')} style={{ padding: '8px 12px', borderRadius: '14px', backgroundColor: arFilter === 'hearts' ? colors.accent : '#27272a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '12px' }}>💖 Hearts</button>
+              <button onClick={() => setActiveVideoCall(false)} style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', fontSize: '18px', cursor: 'pointer' }}>📞</button>
             </div>
           </div>
         )}
