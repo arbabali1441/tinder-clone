@@ -98,6 +98,9 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
 
+  // Voice Note Playback State
+  const [playingVoiceId, setPlayingVoiceId] = useState(null);
+
   // Dynamic Theme Palette
   const isDark = theme === 'dark';
   const colors = {
@@ -209,8 +212,8 @@ export default function App() {
   const sendVoiceNote = () => {
     if (!activeMatch) return;
     const matchId = activeMatch.id;
-    const durationStr = `${recordTime > 0 ? recordTime : 3}s`;
-    const newMsg = { sender: 'me', isVoice: true, duration: durationStr, text: `🎙️ Voice Note (${durationStr})` };
+    const durationSec = recordTime > 0 ? recordTime : 3;
+    const newMsg = { id: Date.now(), sender: 'me', isVoice: true, duration: `${durationSec}s`, text: `Voice Note (${durationSec}s)` };
 
     setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), newMsg] }));
     setIsRecording(false);
@@ -219,9 +222,17 @@ export default function App() {
     setTimeout(() => {
       setIsTyping(false);
       const randomReply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)];
-      const replyMsg = { sender: 'match', text: randomReply };
+      const replyMsg = { id: Date.now() + 1, sender: 'match', text: randomReply };
       setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), replyMsg] }));
     }, 2000);
+  };
+
+  const playVoiceNote = (msgId) => {
+    setPlayingVoiceId(msgId);
+    showToast("▶️ Playing voice note audio...");
+    setTimeout(() => {
+      setPlayingVoiceId(null);
+    }, 3000);
   };
 
   const formatTimer = (seconds) => {
@@ -305,10 +316,11 @@ export default function App() {
     }
   };
 
-  const sendMessage = () => {
-    if (!inputText.trim() || !activeMatch) return;
+  const sendMessage = (textToSend) => {
+    const text = typeof textToSend === 'string' ? textToSend : inputText;
+    if (!text.trim() || !activeMatch) return;
     const matchId = activeMatch.id;
-    const newMsg = { sender: 'me', text: inputText };
+    const newMsg = { id: Date.now(), sender: 'me', text };
     
     setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), newMsg] }));
     setInputText('');
@@ -317,7 +329,7 @@ export default function App() {
     setTimeout(() => {
       setIsTyping(false);
       const randomReply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)];
-      const replyMsg = { sender: 'match', text: randomReply };
+      const replyMsg = { id: Date.now() + 1, sender: 'match', text: randomReply };
       setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), replyMsg] }));
     }, 2000);
   };
@@ -539,13 +551,28 @@ export default function App() {
 
               <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }} onClick={() => setShowChatMenu(false)}>
                 <div style={{ backgroundColor: colors.pillBg, padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', color: colors.text }}>You matched with {activeMatch.name}! Say something nice. ✨</div>
-                {(messages[activeMatch.id] || []).map((msg, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', backgroundColor: msg.sender === 'me' ? '#f43f5e' : colors.pillBg, color: '#fff' }}>
+                {(messages[activeMatch.id] || []).map((msg) => (
+                  <div key={msg.id} style={{ display: 'flex', justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start' }}>
+                    <div 
+                      onClick={() => msg.isVoice && playVoiceNote(msg.id)}
+                      style={{ 
+                        padding: '10px 14px', 
+                        borderRadius: '16px', 
+                        maxWidth: '80%', 
+                        fontSize: '13px', 
+                        backgroundColor: msg.sender === 'me' ? '#f43f5e' : colors.pillBg, 
+                        color: '#fff',
+                        cursor: msg.isVoice ? 'pointer' : 'default',
+                        boxShadow: msg.isVoice ? '0 4px 12px rgba(244,63,94,0.3)' : 'none'
+                      }}
+                    >
                       {msg.isVoice ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span>▶️</span>
-                          <span>{msg.text}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '16px' }}>{playingVoiceId === msg.id ? '⏸️' : '▶️'}</span>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontWeight: 'bold' }}>{playingVoiceId === msg.id ? 'Playing audio...' : msg.text}</span>
+                            <span style={{ fontSize: '10px', opacity: 0.8 }}>Tap to play voice note</span>
+                          </div>
                         </div>
                       ) : (
                         msg.text
@@ -560,10 +587,13 @@ export default function App() {
                 )}
               </div>
               
-              <div style={{ padding: '8px 16px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <button onClick={generateAIIcebreaker} style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  ✨ Generate AI Icebreaker
-                </button>
+              {/* Next Step Feature: Icebreaker Quick Prompts Bar */}
+              <div style={{ padding: '8px 12px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px', overflowX: 'auto' }}>
+                {ICEBREAKERS.map((ice, i) => (
+                  <button key={i} onClick={() => sendMessage(ice)} style={{ whiteSpace: 'nowrap', background: colors.pillBg, border: `1px solid ${colors.border}`, color: colors.text, padding: '6px 12px', borderRadius: '16px', fontSize: '11px', cursor: 'pointer' }}>
+                    {ice}
+                  </button>
+                ))}
               </div>
 
               <div style={{ padding: '12px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -577,9 +607,9 @@ export default function App() {
                   </div>
                 ) : (
                   <>
-                    <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: colors.text, outline: 'none' }} />
+                    <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: colors.text, outline: 'none' }} />
                     <button onClick={() => setIsRecording(true)} style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Record Voice Note">🎙️</button>
-                    <button onClick={sendMessage} style={{ padding: '10px 18px', borderRadius: '20px', backgroundColor: '#f43f5e', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Send</button>
+                    <button onClick={() => sendMessage(inputText)} style={{ padding: '10px 18px', borderRadius: '20px', backgroundColor: '#f43f5e', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Send</button>
                   </>
                 )}
               </div>
