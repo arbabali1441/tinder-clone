@@ -11,6 +11,7 @@ const INITIAL_PROFILES = [
     status: 'Active recently',
     matchScore: '94%',
     mutualFriends: 2,
+    lounge: 'Coffee Dates ☕',
     bio: 'Coffee addict ☕, art lover, and weekend traveler.', 
     interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️'], 
     spotify: 'Taylor Swift - Cruel Summer',
@@ -31,6 +32,7 @@ const INITIAL_PROFILES = [
     status: 'Active 2h ago',
     matchScore: '88%',
     mutualFriends: 0,
+    lounge: 'Thrill Seekers 🚀',
     bio: 'Software developer by day, guitarist by night 🎸.', 
     interests: ['Coding 💻', 'Guitar 🎸', 'Tech 🚀'], 
     spotify: 'The Weeknd - Starboy',
@@ -51,6 +53,7 @@ const INITIAL_PROFILES = [
     status: 'Online now ✨',
     matchScore: '97%',
     mutualFriends: 4,
+    lounge: 'Foodies 🍕',
     bio: 'Sunset chaser 🌅 and fitness enthusiast.', 
     interests: ['Hiking 🥾', 'Fitness 💪', 'Nature 🌲'], 
     spotify: 'Dua Lipa - Levitating',
@@ -90,6 +93,7 @@ export default function App() {
   const [fullName, setFullName] = useState('');
   
   const [theme, setTheme] = useState(() => localStorage.getItem('tinder_theme') || 'dark');
+  const [accentColor, setAccentColor] = useState(() => localStorage.getItem('tinder_accent') || '#f43f5e'); // #f43f5e (Tinder), #eab308 (Bumble), #8b5cf6 (Hinge)
   const [currentTab, setCurrentTab] = useState('swipe');
   
   const [maxDistance, setMaxDistance] = useState(10000);
@@ -97,20 +101,24 @@ export default function App() {
   const [maxAge, setMaxAge] = useState(35);
   const [genderFilter, setGenderFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [superLikesLeft, setSuperLikesLeft] = useState(3);
   const [currentCity, setCurrentCity] = useState({ name: 'Dubai, UAE', lat: 25.2048, lng: 55.2708 });
 
-  // New Features States
+  // Swipe Limits & Countdown Timer
+  const [swipesLeft, setSwipesLeft] = useState(45);
+  const [resetTimer, setResetTimer] = useState(43200); // 12 hours in seconds
+
+  // New Features
   const [isIncognito, setIsIncognito] = useState(false);
   const [activeStory, setActiveStory] = useState(null);
   const [activeVideoCall, setActiveVideoCall] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState(() => JSON.parse(localStorage.getItem('tinder_blocked') || '[]'));
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [selectedLounge, setSelectedLounge] = useState('All');
 
   const [isBlindDateMode, setIsBlindDateMode] = useState(false);
   const [showPassportModal, setShowPassportModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
-  const [showFullProfileModal, setShowFullProfileModal] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [swipeBadge, setSwipeBadge] = useState(null);
 
@@ -141,10 +149,26 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem('tinder_auth', isAuthenticated); }, [isAuthenticated]);
   useEffect(() => { localStorage.setItem('tinder_theme', theme); }, [theme]);
+  useEffect(() => { localStorage.setItem('tinder_accent', accentColor); }, [accentColor]);
   useEffect(() => { localStorage.setItem('tinder_profile', JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem('tinder_matches', JSON.stringify(matches)); }, [matches]);
   useEffect(() => { localStorage.setItem('tinder_messages', JSON.stringify(messages)); }, [messages]);
   useEffect(() => { localStorage.setItem('tinder_blocked', JSON.stringify(blockedUsers)); }, [blockedUsers]);
+
+  // Swipe reset timer countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setResetTimer(prev => (prev > 0 ? prev - 1 : 43200));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatCountdown = (secs) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    return `${h}h ${m}m ${s}s`;
+  };
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -166,6 +190,7 @@ export default function App() {
 
   const filteredProfiles = INITIAL_PROFILES.filter(p => {
     if (blockedUsers.includes(p.id)) return false;
+    if (selectedLounge !== 'All' && p.lounge !== selectedLounge) return false;
     const dist = calculateDistance(currentCity.lat, currentCity.lng, p.lat, p.lng);
     const matchesDistance = dist <= maxDistance;
     const matchesAge = p.age >= minAge && p.age <= maxAge;
@@ -192,7 +217,6 @@ export default function App() {
     showToast("🎉 Successfully signed in!");
   };
 
-  // AI Assistant Generators
   const generateAIBio = () => {
     const randomBio = AI_BIOS[Math.floor(Math.random() * AI_BIOS.length)];
     setUserProfile(prev => ({ ...prev, bio: randomBio }));
@@ -208,13 +232,13 @@ export default function App() {
   const sendMsgObj = (msgData) => {
     if (!activeMatch) return;
     const matchId = activeMatch.id;
-    const newMsg = { id: Date.now(), sender: 'me', read: false, ...msgData };
+    const newMsg = { id: Date.now(), sender: 'me', readTime: 'Read just now', reaction: null, ...msgData };
     setMessages(prev => ({ ...prev, [matchId]: [...(prev[matchId] || []), newMsg] }));
 
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
-      const replyMsg = { id: Date.now() + 1, sender: 'match', read: true, text: "Totally agree! Let's chat more 😊" };
+      const replyMsg = { id: Date.now() + 1, sender: 'match', readTime: 'Read just now', reaction: null, text: "Totally agree! Let's chat more 😊" };
       setMessages(prev => ({ ...prev, [matchId]: [...(prev[matchId] || []), replyMsg] }));
     }, 1500);
   };
@@ -231,16 +255,25 @@ export default function App() {
     setShowGifPicker(false);
   };
 
+  const handleMessageReaction = (msgId, emoji) => {
+    if (!activeMatch) return;
+    const matchId = activeMatch.id;
+    setMessages(prev => ({
+      ...prev,
+      [matchId]: (prev[matchId] || []).map(m => m.id === msgId ? { ...m, reaction: emoji } : m)
+    }));
+  };
+
   const handleSwipe = useCallback((direction) => {
+    if (swipesLeft <= 0) {
+      showToast(`⚠️ Daily swipe limit reached! Resets in ${formatCountdown(resetTimer)}`);
+      return;
+    }
     if (currentIndex >= filteredProfiles.length) return;
     const profile = filteredProfiles[currentIndex];
+    setSwipesLeft(prev => prev - 1);
 
     if (direction === 'super') {
-      if (superLikesLeft <= 0) {
-        showToast("⚠️ No Super Likes left!");
-        return;
-      }
-      setSuperLikesLeft(prev => prev - 1);
       triggerBadge('SUPER');
       setHistory(prev => [...prev, { index: currentIndex, photoIndex: currentPhotoIndex, profile }]);
       setMatches(prev => [...prev, profile]);
@@ -259,7 +292,7 @@ export default function App() {
     }
     setCurrentIndex(prev => prev + 1);
     setCurrentPhotoIndex(0);
-  }, [currentIndex, filteredProfiles, currentPhotoIndex, superLikesLeft]);
+  }, [currentIndex, filteredProfiles, currentPhotoIndex, swipesLeft, resetTimer]);
 
   const isDark = theme === 'dark';
   const colors = {
@@ -269,7 +302,8 @@ export default function App() {
     border: isDark ? '#27272a' : '#e4e4e7',
     text: isDark ? '#ffffff' : '#09090b',
     subText: isDark ? '#a1a1aa' : '#71717a',
-    pillBg: isDark ? '#27272a' : '#e4e4e7'
+    pillBg: isDark ? '#27272a' : '#e4e4e7',
+    accent: accentColor
   };
 
   return (
@@ -283,7 +317,7 @@ export default function App() {
       `}</style>
       
       {toastMessage && (
-        <div style={{ position: 'absolute', top: '24px', zIndex: 700, backgroundColor: '#f43f5e', color: '#fff', padding: '10px 20px', borderRadius: '30px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', animation: 'fadeInOut 2.2s ease forwards' }}>
+        <div style={{ position: 'absolute', top: '24px', zIndex: 700, backgroundColor: colors.accent, color: '#fff', padding: '10px 20px', borderRadius: '30px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', animation: 'fadeInOut 2.2s ease forwards' }}>
           {toastMessage}
         </div>
       )}
@@ -294,15 +328,14 @@ export default function App() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 24px', backgroundColor: colors.cardBg, textAlign: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
               <span style={{ fontSize: '48px', marginBottom: '8px' }}>🔥</span>
-              <h1 style={{ fontSize: '28px', fontWeight: '900', background: 'linear-gradient(to right, #f43f5e, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 6px 0' }}>tinder</h1>
-              <p style={{ fontSize: '13px', color: colors.subText, margin: 0 }}>AI Matches, Stories & Video Calls</p>
+              <h1 style={{ fontSize: '28px', fontWeight: '900', color: colors.accent, margin: '0 0 6px 0' }}>tinder</h1>
+              <p style={{ fontSize: '13px', color: colors.subText, margin: 0 }}>Ultimate Dating Ecosystem</p>
             </div>
 
             {authMode === 'welcome' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-                <button onClick={() => setAuthMode('signup')} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>📝 Create Account (Sign Up)</button>
+                <button onClick={() => setAuthMode('signup')} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>📝 Create Account (Sign Up)</button>
                 <button onClick={() => setAuthMode('signin')} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '15px' }}>🔐 Sign In (Log In)</button>
-                <button onClick={() => setIsAuthenticated(true)} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '12px', cursor: 'pointer', marginTop: '4px' }}>⚡ Quick Demo Entry</button>
               </div>
             )}
 
@@ -325,13 +358,13 @@ export default function App() {
                   <label style={{ fontSize: '11px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Password</label>
                   <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '10px', color: colors.text, fontSize: '13px' }} />
                 </div>
-                <button onClick={handleAuthSubmit} style={{ width: '100%', padding: '13px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}>
+                <button onClick={handleAuthSubmit} style={{ width: '100%', padding: '13px', borderRadius: '30px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}>
                   {authMode === 'signup' ? 'Sign Up' : 'Log In'}
                 </button>
-                <button onClick={() => setAuthMode('welcome')} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '12px', cursor: 'pointer', textAlign: 'center' }}>← Back to options</button>
+                <button onClick={() => setAuthMode('welcome')} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '12px', cursor: 'pointer', textAlign: 'center' }}>← Back</button>
               </div>
             )}
-            <div style={{ fontSize: '11px', color: colors.subText }}>Ultimate Dating Ecosystem Ready</div>
+            <div style={{ fontSize: '11px', color: colors.subText }}>Fully Loaded Ecosystem</div>
           </div>
         ) : (
           <>
@@ -339,12 +372,12 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.headerBg }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '22px' }}>🔥</span>
-                <span style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(to right, #f43f5e, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>tinder</span>
+                <span style={{ fontSize: '20px', fontWeight: '800', color: colors.accent }}>tinder</span>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {currentTab === 'swipe' && (
                   <>
-                    <button onClick={() => setIsBlindDateMode(!isBlindDateMode)} style={{ background: isBlindDateMode ? '#3b82f6' : colors.pillBg, border: 'none', padding: '4px 6px', borderRadius: '10px', fontSize: '10px', color: isBlindDateMode ? '#fff' : colors.text, cursor: 'pointer' }}>🕶️ Blind</button>
+                    <button onClick={() => setIsBlindDateMode(!isBlindDateMode)} style={{ background: isBlindDateMode ? colors.accent : colors.pillBg, border: 'none', padding: '4px 6px', borderRadius: '10px', fontSize: '10px', color: isBlindDateMode ? '#fff' : colors.text, cursor: 'pointer' }}>🕶️ Blind</button>
                     <button onClick={() => setShowPassportModal(true)} style={{ background: 'none', border: `1px solid ${colors.border}`, padding: '4px 6px', borderRadius: '10px', fontSize: '10px', color: colors.text, cursor: 'pointer' }}>📍 {currentCity.name.split(',')[0]}</button>
                   </>
                 )}
@@ -362,11 +395,21 @@ export default function App() {
               {currentTab === 'swipe' && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '12px' }}>
                   
-                  {/* Video Stories Tray */}
+                  {/* Explore Lounges & Swipe Limit Counter */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
+                      {['All', 'Coffee Dates ☕', 'Thrill Seekers 🚀', 'Foodies 🍕'].map(lounge => (
+                        <button key={lounge} onClick={() => setSelectedLounge(lounge)} style={{ whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '12px', fontSize: '10px', backgroundColor: selectedLounge === lounge ? colors.accent : colors.pillBg, color: selectedLounge === lounge ? '#fff' : colors.text, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{lounge}</button>
+                      ))}
+                    </div>
+                    <span style={{ fontSize: '10px', color: colors.subText, whiteSpace: 'nowrap' }}>⚡ {swipesLeft} left ({formatCountdown(resetTimer)})</span>
+                  </div>
+
+                  {/* Stories Tray */}
                   <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
                     {INITIAL_PROFILES.map(p => (
                       <div key={p.id} onClick={() => setActiveStory(p)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                        <div style={{ width: '54px', height: '54px', borderRadius: '50%', padding: '2px', background: 'linear-gradient(135deg, #f43f5e, #ec4899)' }}>
+                        <div style={{ width: '50px', height: '50px', borderRadius: '50%', padding: '2px', background: colors.accent }}>
                           <img src={p.images[0]} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                         </div>
                         <span style={{ fontSize: '10px', marginTop: '2px', color: colors.text }}>{p.name}</span>
@@ -376,11 +419,11 @@ export default function App() {
 
                   {currentIndex < filteredProfiles.length ? (
                     <>
-                      <div style={{ width: '100%', height: '360px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                      <div style={{ width: '100%', height: '340px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                         {swipeBadge === 'LIKE' && <div style={{ position: 'absolute', top: '30px', left: '20px', border: '4px solid #22c55e', color: '#22c55e', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>LIKE</div>}
                         {swipeBadge === 'NOPE' && <div style={{ position: 'absolute', top: '30px', right: '20px', border: '4px solid #ef4444', color: '#ef4444', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>NOPE</div>}
 
-                        <div style={{ position: 'relative', width: '100%', height: '210px', filter: isBlindDateMode ? 'blur(16px)' : 'none', transition: 'filter 0.3s' }}>
+                        <div style={{ position: 'relative', width: '100%', height: '190px', filter: isBlindDateMode ? 'blur(16px)' : 'none', transition: 'filter 0.3s' }}>
                           <img src={filteredProfiles[currentIndex].images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           {isBlindDateMode && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', background: 'rgba(0,0,0,0.4)', fontSize: '13px' }}>🔒 Blind Date Active</div>}
                           <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '10px', fontSize: '11px', color: '#34d399', fontWeight: 'bold' }}>⚡ {filteredProfiles[currentIndex].matchScore} Match</div>
@@ -389,26 +432,26 @@ export default function App() {
                         <div style={{ padding: '10px 12px', backgroundColor: colors.cardBg }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name}, {filteredProfiles[currentIndex].age}</h2>
-                            {filteredProfiles[currentIndex].verified && <span style={{ backgroundColor: '#3b82f6', color: '#fff', fontSize: '9px', padding: '2px 5px', borderRadius: '8px' }}>✓ Blue Tick</span>}
+                            {filteredProfiles[currentIndex].verified && <span style={{ backgroundColor: '#3b82f6', color: '#fff', fontSize: '9px', padding: '2px 5px', borderRadius: '8px' }}>✓ Verified</span>}
                           </div>
                           <p style={{ fontSize: '11px', color: colors.subText, margin: '2px 0 4px 0' }}>👥 {filteredProfiles[currentIndex].mutualFriends} Mutual Friends • 🎵 {filteredProfiles[currentIndex].spotify}</p>
                           <div style={{ backgroundColor: colors.pillBg, padding: '6px 8px', borderRadius: '8px', fontSize: '11px', margin: '4px 0' }}>
-                            <span style={{ color: '#f43f5e', fontWeight: 'bold' }}>{filteredProfiles[currentIndex].prompts.q}</span>
+                            <span style={{ color: colors.accent, fontWeight: 'bold' }}>{filteredProfiles[currentIndex].prompts.q}</span>
                             <div style={{ fontWeight: '500' }}>"{filteredProfiles[currentIndex].prompts.a}"</div>
                           </div>
                         </div>
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
-                        <button onClick={() => handleSwipe('left')} style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '18px' }}>❌</button>
-                        <button onClick={() => handleSwipe('right')} style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '22px', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
+                        <button onClick={() => handleSwipe('left')} style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '18px' }}>❌</button>
+                        <button onClick={() => handleSwipe('right')} style={{ width: '54px', height: '54px', borderRadius: '50%', backgroundColor: colors.accent, border: 'none', cursor: 'pointer', fontSize: '22px', boxShadow: '0 6px 20px rgba(0,0,0,0.3)' }}>❤️</button>
                       </div>
                     </>
                   ) : (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px' }}>
                       <span style={{ fontSize: '44px', marginBottom: '8px' }}>🎉</span>
                       <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>No more profiles!</h3>
-                      <button onClick={() => setCurrentIndex(0)} style={{ marginTop: '16px', padding: '10px 20px', borderRadius: '20px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
+                      <button onClick={() => setCurrentIndex(0)} style={{ marginTop: '16px', padding: '10px 20px', borderRadius: '20px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
                     </div>
                   )}
                 </div>
@@ -417,7 +460,7 @@ export default function App() {
               {/* LIKES YOU TAB */}
               {currentTab === 'likes' && (
                 <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: '#f43f5e', marginBottom: '12px' }}>Profiles Who Liked You ({likesYouList.length})</h3>
+                  <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: colors.accent, marginBottom: '12px' }}>Profiles Who Liked You ({likesYouList.length})</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                     {likesYouList.map(p => (
                       <div key={p.id} onClick={() => { setMatches(prev => [...prev, p]); setActiveMatch(p); setCurrentTab('chat'); }} style={{ height: '180px', borderRadius: '14px', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}>
@@ -434,14 +477,14 @@ export default function App() {
               {/* MATCHES & CHAT */}
               {currentTab === 'matches' && (
                 <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: '#f43f5e', marginBottom: '12px' }}>Your Matches ({matches.length})</h3>
+                  <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: colors.accent, marginBottom: '12px' }}>Your Matches ({matches.length})</h3>
                   {matches.length === 0 ? (
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.subText }}>No matches yet!</div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                       {matches.map(m => (
                         <div key={m.id} onClick={() => { setActiveMatch(m); setCurrentTab('chat'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
-                          <img src={m.images[0]} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f43f5e' }} />
+                          <img src={m.images[0]} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${colors.accent}` }} />
                           <span style={{ fontSize: '11px', marginTop: '4px' }}>{m.name}</span>
                         </div>
                       ))}
@@ -454,21 +497,31 @@ export default function App() {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: colors.bg, position: 'relative' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', backgroundColor: colors.headerBg, borderBottom: `1px solid ${colors.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', color: '#f43f5e', fontWeight: 'bold', cursor: 'pointer', marginRight: '10px' }}>←</button>
+                      <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', color: colors.accent, fontWeight: 'bold', cursor: 'pointer', marginRight: '10px' }}>←</button>
                       <img src={activeMatch.images[0]} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
                       <h4 style={{ fontSize: '13px', margin: 0 }}>{activeMatch.name}</h4>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <button onClick={() => setActiveVideoCall(true)} style={{ background: 'none', border: 'none', color: '#34d399', fontSize: '16px', cursor: 'pointer' }} title="Video Call">📹</button>
+                      <button onClick={() => setActiveVideoCall(true)} style={{ background: 'none', border: 'none', color: '#34d399', fontSize: '16px', cursor: 'pointer' }}>📹</button>
                       <button onClick={() => setShowReportModal(true)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '14px', cursor: 'pointer' }}>⚠️</button>
                     </div>
                   </div>
 
-                  <div style={{ flex: 1, padding: '14px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ flex: 1, padding: '14px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {(messages[activeMatch.id] || []).map(msg => (
                       <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'me' ? 'flex-end' : 'flex-start' }}>
-                        <div style={{ padding: '8px 12px', borderRadius: '14px', maxWidth: '80%', fontSize: '12px', backgroundColor: msg.sender === 'me' ? '#f43f5e' : colors.pillBg, color: '#fff' }}>
+                        <div style={{ padding: '8px 12px', borderRadius: '14px', maxWidth: '80%', fontSize: '12px', backgroundColor: msg.sender === 'me' ? colors.accent : colors.pillBg, color: '#fff', position: 'relative' }}>
                           {msg.image ? <img src={msg.image} alt="" style={{ width: '150px', borderRadius: '8px' }} /> : msg.text}
+                          {msg.reaction && <span style={{ position: 'absolute', bottom: '-10px', right: msg.sender === 'me' ? '0' : 'auto', left: msg.sender === 'me' ? 'auto' : '0', backgroundColor: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '1px 4px', fontSize: '10px' }}>{msg.reaction}</span>}
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>
+                          <span style={{ fontSize: '9px', color: colors.subText }}>{msg.readTime}</span>
+                          {msg.sender === 'me' && (
+                            <div style={{ display: 'flex', gap: '4px', fontSize: '10px' }}>
+                              <span onClick={() => handleMessageReaction(msg.id, '❤️')} style={{ cursor: 'pointer' }}>❤️</span>
+                              <span onClick={() => handleMessageReaction(msg.id, '😂')} style={{ cursor: 'pointer' }}>😂</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -488,13 +541,13 @@ export default function App() {
                   )}
 
                   <div style={{ padding: '8px 12px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '6px', overflowX: 'auto' }}>
-                    <button onClick={generateAIIcebreaker} style={{ whiteSpace: 'nowrap', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e', padding: '4px 10px', borderRadius: '14px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>✨ AI Icebreaker</button>
+                    <button onClick={generateAIIcebreaker} style={{ whiteSpace: 'nowrap', background: colors.pillBg, border: `1px solid ${colors.border}`, color: colors.text, padding: '4px 10px', borderRadius: '14px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>✨ AI Icebreaker</button>
                   </div>
 
                   <div style={{ padding: '10px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button onClick={() => setShowGifPicker(!showGifPicker)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }}>🎨</button>
                     <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '18px', padding: '8px 14px', fontSize: '12px', color: colors.text, outline: 'none' }} />
-                    <button onClick={() => sendMessage(inputText)} style={{ background: '#f43f5e', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '18px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Send</button>
+                    <button onClick={() => sendMessage(inputText)} style={{ background: colors.accent, color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '18px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Send</button>
                   </div>
                 </div>
               )}
@@ -502,25 +555,42 @@ export default function App() {
               {/* PROFILE TAB */}
               {currentTab === 'profile' && (
                 <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto' }}>
-                  <img src={userProfile.image} alt="" style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #f43f5e', marginBottom: '8px' }} />
+                  <img src={userProfile.image} alt="" style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: `3px solid ${colors.accent}`, marginBottom: '8px' }} />
 
                   <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{userProfile.name}, {userProfile.age}</h2>
                   <p style={{ fontSize: '12px', color: colors.subText, margin: '0 0 12px 0' }}>{userProfile.location}</p>
 
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {/* Incognito Mode Toggle */}
+                    
+                    {/* Theme & Accent Customizer */}
                     <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '12px 14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 'bold' }}>🕶️ Incognito Mode</div>
-                        <div style={{ fontSize: '10px', color: colors.subText }}>Only visible to people you like</div>
-                      </div>
-                      <button onClick={() => setIsIncognito(!isIncognito)} style={{ padding: '6px 12px', borderRadius: '14px', backgroundColor: isIncognito ? '#3b82f6' : colors.pillBg, color: isIncognito ? '#fff' : colors.text, border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '11px' }}>
-                        {isIncognito ? 'On' : 'Off'}
+                      <span style={{ fontSize: '13px', fontWeight: 'bold' }}>App Theme</span>
+                      <button onClick={() => setTheme(isDark ? 'light' : 'dark')} style={{ padding: '6px 12px', borderRadius: '14px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', color: colors.text }}>
+                        {isDark ? '🌙 Dark' : '☀️ Light'}
                       </button>
                     </div>
 
-                    {/* AI Bio Generator Button */}
-                    <button onClick={generateAIIcebreaker} onClickCapture={generateAIBio} style={{ width: '100%', padding: '12px', borderRadius: '20px', background: 'linear-gradient(135deg, #a855f7, #6366f1)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>✨ Generate AI Bio</button>
+                    <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '12px 14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold' }}>Accent Palette</span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {[
+                          { name: 'Tinder', color: '#f43f5e' },
+                          { name: 'Bumble', color: '#eab308' },
+                          { name: 'Hinge', color: '#8b5cf6' }
+                        ].map(acc => (
+                          <button key={acc.name} onClick={() => setAccentColor(acc.color)} style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: acc.color, border: accentColor === acc.color ? '2px solid #fff' : 'none', cursor: 'pointer' }} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Verification Button */}
+                    {!userProfile.verified ? (
+                      <button onClick={() => setShowVerificationModal(true)} style={{ width: '100%', padding: '12px', borderRadius: '20px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>✓ Verify Profile (Live Selfie Pose)</button>
+                    ) : (
+                      <div style={{ padding: '10px', backgroundColor: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold' }}>✓ Verified Profile Active</div>
+                    )}
+
+                    <button onClick={generateAIBio} style={{ width: '100%', padding: '12px', borderRadius: '20px', background: 'linear-gradient(135deg, #a855f7, #6366f1)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>✨ Generate AI Bio</button>
 
                     <button onClick={() => { setIsAuthenticated(false); showToast("Logged out successfully"); }} style={{ width: '100%', padding: '12px', borderRadius: '20px', backgroundColor: colors.pillBg, color: '#ef4444', border: `1px solid ${colors.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🚪 Log Out</button>
                   </div>
@@ -529,6 +599,17 @@ export default function App() {
 
             </div>
           </>
+        )}
+
+        {/* VERIFICATION MODAL */}
+        {showVerificationModal && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 800, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>Photo Verification</h3>
+            <p style={{ fontSize: '12px', color: '#a1a1aa', marginBottom: '20px' }}>Copy the gesture shown below to get your blue tick instantly.</p>
+            <div style={{ width: '140px', height: '140px', borderRadius: '50%', border: '4px dashed #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', marginBottom: '20px', backgroundColor: '#18181b' }}>✌️</div>
+            <button onClick={() => { setUserProfile(prev => ({ ...prev, verified: true })); setShowVerificationModal(false); showToast("✅ Verified successfully with Blue Tick!"); }} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginBottom: '10px' }}>Take Selfie & Verify</button>
+            <button onClick={() => setShowVerificationModal(false)} style={{ background: 'none', border: 'none', color: '#a1a1aa', cursor: 'pointer', fontSize: '12px' }}>Cancel</button>
+          </div>
         )}
 
         {/* VIDEO STORIES MODAL */}
@@ -545,7 +626,7 @@ export default function App() {
               <video src={activeStory.storyVideo} autoPlay loop muted style={{ width: '100%', maxHeight: '480px', objectFit: 'cover', borderRadius: '16px' }} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => { setActiveStory(null); setMatches(prev => [...prev, activeStory]); setActiveMatch(activeStory); setCurrentTab('chat'); }} style={{ flex: 1, padding: '12px', borderRadius: '20px', background: '#f43f5e', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reply to Story</button>
+              <button onClick={() => { setActiveStory(null); setMatches(prev => [...prev, activeStory]); setActiveMatch(activeStory); setCurrentTab('chat'); }} style={{ flex: 1, padding: '12px', borderRadius: '20px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reply to Story</button>
             </div>
           </div>
         )}
@@ -595,7 +676,7 @@ export default function App() {
                   { name: 'New York, USA', lat: 40.7128, lng: -74.0060 },
                   { name: 'London, UK', lat: 51.5074, lng: -0.1278 }
                 ].map((c, i) => (
-                  <button key={i} onClick={() => { setCurrentCity(c); setShowPassportModal(false); showToast(`📍 Location set to ${c.name}`); }} style={{ padding: '12px', borderRadius: '12px', backgroundColor: currentCity.name === c.name ? '#f43f5e' : colors.pillBg, color: currentCity.name === c.name ? '#fff' : colors.text, border: 'none', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer' }}>{c.name}</button>
+                  <button key={i} onClick={() => { setCurrentCity(c); setShowPassportModal(false); showToast(`📍 Location set to ${c.name}`); }} style={{ padding: '12px', borderRadius: '12px', backgroundColor: currentCity.name === c.name ? colors.accent : colors.pillBg, color: currentCity.name === c.name ? '#fff' : colors.text, border: 'none', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer' }}>{c.name}</button>
                 ))}
               </div>
               <button onClick={() => setShowPassportModal(false)} style={{ width: '100%', padding: '12px', borderRadius: '20px', backgroundColor: colors.pillBg, border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
