@@ -9,9 +9,13 @@ const INITIAL_PROFILES = [
     lat: 25.2048, lng: 55.2708,
     verified: true,
     status: 'Active recently',
+    matchScore: '94%',
+    mutualFriends: 2,
     bio: 'Coffee addict ☕, art lover, and weekend traveler.', 
     interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️'], 
     spotify: 'Taylor Swift - Cruel Summer',
+    prompts: { q: "My simple pleasures...", a: "Fresh morning coffee and sunset drives 🌅" },
+    storyVideo: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-lights-41642-large.mp4',
     images: [
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80'
@@ -25,9 +29,13 @@ const INITIAL_PROFILES = [
     lat: 40.7128, lng: -74.0060,
     verified: false,
     status: 'Active 2h ago',
+    matchScore: '88%',
+    mutualFriends: 0,
     bio: 'Software developer by day, guitarist by night 🎸.', 
     interests: ['Coding 💻', 'Guitar 🎸', 'Tech 🚀'], 
     spotify: 'The Weeknd - Starboy',
+    prompts: { q: "I'm looking for...", a: "Someone to jam with and try new burgers 🍔" },
+    storyVideo: 'https://assets.mixkit.co/videos/preview/mixkit-man-working-on-his-laptop-in-a-cafe-43085-large.mp4',
     images: [
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80'
@@ -41,9 +49,13 @@ const INITIAL_PROFILES = [
     lat: 51.5074, lng: -0.1278,
     verified: true,
     status: 'Online now ✨',
+    matchScore: '97%',
+    mutualFriends: 4,
     bio: 'Sunset chaser 🌅 and fitness enthusiast.', 
     interests: ['Hiking 🥾', 'Fitness 💪', 'Nature 🌲'], 
     spotify: 'Dua Lipa - Levitating',
+    prompts: { q: "Together, we could...", a: "Explore hidden hiking trails and conquer mountains ⛰️" },
+    storyVideo: 'https://assets.mixkit.co/videos/preview/mixkit-woman-doing-yoga-in-a-living-room-42867-large.mp4',
     images: [
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80'
@@ -58,9 +70,21 @@ const GIF_LIST = [
   "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif"
 ];
 
+const AI_BIOS = [
+  "Tech nerd by day, coffee connoisseur by night ☕. Let's debate pineapple pizza!",
+  "Always chasing sunsets 🌅, good music 🎶, and amazing food adventures.",
+  "Here for a good time and deep conversations about architecture and AI 🚀."
+];
+
+const AI_ICEBREAKERS = [
+  "If you could only eat one meal for the rest of your life, what is it? 🍕",
+  "What's your absolute favorite spot in the city? 🏙️",
+  "Quick! Cats or dogs? Choose wisely 🐶🐱"
+];
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('tinder_auth') === 'true');
-  const [authMode, setAuthMode] = useState('welcome'); // 'welcome' | 'signin' | 'signup'
+  const [authMode, setAuthMode] = useState('welcome');
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -76,6 +100,12 @@ export default function App() {
   const [superLikesLeft, setSuperLikesLeft] = useState(3);
   const [currentCity, setCurrentCity] = useState({ name: 'Dubai, UAE', lat: 25.2048, lng: 55.2708 });
 
+  // New Features States
+  const [isIncognito, setIsIncognito] = useState(false);
+  const [activeStory, setActiveStory] = useState(null);
+  const [activeVideoCall, setActiveVideoCall] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState(() => JSON.parse(localStorage.getItem('tinder_blocked') || '[]'));
+
   const [isBlindDateMode, setIsBlindDateMode] = useState(false);
   const [showPassportModal, setShowPassportModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -83,9 +113,6 @@ export default function App() {
   const [showFullProfileModal, setShowFullProfileModal] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [swipeBadge, setSwipeBadge] = useState(null);
-
-  const [activeCall, setActiveCall] = useState(false);
-  const [callStatus, setCallStatus] = useState('Ringing...');
 
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('tinder_profile');
@@ -117,6 +144,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem('tinder_profile', JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem('tinder_matches', JSON.stringify(matches)); }, [matches]);
   useEffect(() => { localStorage.setItem('tinder_messages', JSON.stringify(messages)); }, [messages]);
+  useEffect(() => { localStorage.setItem('tinder_blocked', JSON.stringify(blockedUsers)); }, [blockedUsers]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -137,6 +165,7 @@ export default function App() {
   };
 
   const filteredProfiles = INITIAL_PROFILES.filter(p => {
+    if (blockedUsers.includes(p.id)) return false;
     const dist = calculateDistance(currentCity.lat, currentCity.lng, p.lat, p.lng);
     const matchesDistance = dist <= maxDistance;
     const matchesAge = p.age >= minAge && p.age <= maxAge;
@@ -147,52 +176,33 @@ export default function App() {
 
   const handleAuthSubmit = () => {
     if (!emailOrPhone || !password) {
-      showToast("⚠️ Please fill in all required fields");
+      showToast("⚠️ Please fill in all fields");
+      return;
+    }
+    if (authMode === 'signup' && !fullName) {
+      showToast("⚠️ Please enter your full name");
       return;
     }
     if (authMode === 'signup') {
-      if (!fullName) {
-        showToast("⚠️ Please enter your full name");
-        return;
-      }
-      // Save new registered user
       const newUser = { ...userProfile, name: fullName };
       setUserProfile(newUser);
       localStorage.setItem(`user_${emailOrPhone}`, JSON.stringify({ password, profile: newUser }));
-      setIsAuthenticated(true);
-      showToast("🎉 Account created successfully!");
-    } else {
-      // Sign In check
-      const savedUser = localStorage.getItem(`user_${emailOrPhone}`);
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.password === password) {
-          setUserProfile(parsed.profile);
-          setIsAuthenticated(true);
-          showToast("🎉 Logged in successfully!");
-          return;
-        } else {
-          showToast("❌ Incorrect password");
-          return;
-        }
-      }
-      // Fallback for demo login if user hasn't registered yet
-      setIsAuthenticated(true);
-      showToast("🎉 Logged in successfully!");
     }
+    setIsAuthenticated(true);
+    showToast("🎉 Successfully signed in!");
   };
 
-  const calculateProfileCompletion = () => {
-    let score = 40;
-    if (userProfile.bio) score += 20;
-    if (userProfile.verified) score += 25;
-    if (userProfile.spotify) score += 15;
-    return score;
+  // AI Assistant Generators
+  const generateAIBio = () => {
+    const randomBio = AI_BIOS[Math.floor(Math.random() * AI_BIOS.length)];
+    setUserProfile(prev => ({ ...prev, bio: randomBio }));
+    showToast("✨ AI generated a new bio for you!");
   };
 
-  const verifyProfile = () => {
-    setUserProfile(prev => ({ ...prev, verified: true }));
-    showToast("✅ Profile Verified Successfully with Blue Tick!");
+  const generateAIIcebreaker = () => {
+    const randomIce = AI_ICEBREAKERS[Math.floor(Math.random() * AI_ICEBREAKERS.length)];
+    setInputText(randomIce);
+    showToast("🤖 AI suggested an icebreaker!");
   };
 
   const sendMsgObj = (msgData) => {
@@ -204,7 +214,7 @@ export default function App() {
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
-      const replyMsg = { id: Date.now() + 1, sender: 'match', read: true, text: "Got it! Let's talk more 😊" };
+      const replyMsg = { id: Date.now() + 1, sender: 'match', read: true, text: "Totally agree! Let's chat more 😊" };
       setMessages(prev => ({ ...prev, [matchId]: [...(prev[matchId] || []), replyMsg] }));
     }, 1500);
   };
@@ -273,7 +283,7 @@ export default function App() {
       `}</style>
       
       {toastMessage && (
-        <div style={{ position: 'absolute', top: '24px', zIndex: 600, backgroundColor: '#f43f5e', color: '#fff', padding: '10px 20px', borderRadius: '30px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', animation: 'fadeInOut 2.2s ease forwards' }}>
+        <div style={{ position: 'absolute', top: '24px', zIndex: 700, backgroundColor: '#f43f5e', color: '#fff', padding: '10px 20px', borderRadius: '30px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', animation: 'fadeInOut 2.2s ease forwards' }}>
           {toastMessage}
         </div>
       )}
@@ -285,7 +295,7 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
               <span style={{ fontSize: '48px', marginBottom: '8px' }}>🔥</span>
               <h1 style={{ fontSize: '28px', fontWeight: '900', background: 'linear-gradient(to right, #f43f5e, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 6px 0' }}>tinder</h1>
-              <p style={{ fontSize: '13px', color: colors.subText, margin: 0 }}>Find your perfect match today</p>
+              <p style={{ fontSize: '13px', color: colors.subText, margin: 0 }}>AI Matches, Stories & Video Calls</p>
             </div>
 
             {authMode === 'welcome' && (
@@ -301,14 +311,12 @@ export default function App() {
                 <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 4px 0', textAlign: 'center', color: colors.text }}>
                   {authMode === 'signup' ? 'Create New Account' : 'Welcome Back'}
                 </h3>
-
                 {authMode === 'signup' && (
                   <div>
                     <label style={{ fontSize: '11px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Full Name</label>
                     <input type="text" placeholder="Alex Ali" value={fullName} onChange={(e) => setFullName(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '10px', color: colors.text, fontSize: '13px' }} />
                   </div>
                 )}
-
                 <div>
                   <label style={{ fontSize: '11px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Email or Phone</label>
                   <input type="text" placeholder="user@tinder.com" value={emailOrPhone} onChange={(e) => setEmailOrPhone(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '10px', color: colors.text, fontSize: '13px' }} />
@@ -317,14 +325,13 @@ export default function App() {
                   <label style={{ fontSize: '11px', color: colors.subText, display: 'block', marginBottom: '4px' }}>Password</label>
                   <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '10px', color: colors.text, fontSize: '13px' }} />
                 </div>
-
                 <button onClick={handleAuthSubmit} style={{ width: '100%', padding: '13px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}>
                   {authMode === 'signup' ? 'Sign Up' : 'Log In'}
                 </button>
                 <button onClick={() => setAuthMode('welcome')} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '12px', cursor: 'pointer', textAlign: 'center' }}>← Back to options</button>
               </div>
             )}
-            <div style={{ fontSize: '11px', color: colors.subText }}>Secure Authentication System</div>
+            <div style={{ fontSize: '11px', color: colors.subText }}>Ultimate Dating Ecosystem Ready</div>
           </div>
         ) : (
           <>
@@ -334,11 +341,11 @@ export default function App() {
                 <span style={{ fontSize: '22px' }}>🔥</span>
                 <span style={{ fontSize: '20px', fontWeight: '800', background: 'linear-gradient(to right, #f43f5e, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>tinder</span>
               </div>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {currentTab === 'swipe' && (
                   <>
-                    <button onClick={() => setIsBlindDateMode(!isBlindDateMode)} style={{ background: isBlindDateMode ? '#3b82f6' : colors.pillBg, border: 'none', padding: '4px 8px', borderRadius: '12px', fontSize: '11px', color: isBlindDateMode ? '#fff' : colors.text, cursor: 'pointer' }}>🕶️ Blind</button>
-                    <button onClick={() => setShowPassportModal(true)} style={{ background: 'none', border: `1px solid ${colors.border}`, padding: '4px 8px', borderRadius: '12px', fontSize: '11px', color: colors.text, cursor: 'pointer' }}>📍 {currentCity.name.split(',')[0]}</button>
+                    <button onClick={() => setIsBlindDateMode(!isBlindDateMode)} style={{ background: isBlindDateMode ? '#3b82f6' : colors.pillBg, border: 'none', padding: '4px 6px', borderRadius: '10px', fontSize: '10px', color: isBlindDateMode ? '#fff' : colors.text, cursor: 'pointer' }}>🕶️ Blind</button>
+                    <button onClick={() => setShowPassportModal(true)} style={{ background: 'none', border: `1px solid ${colors.border}`, padding: '4px 6px', borderRadius: '10px', fontSize: '10px', color: colors.text, cursor: 'pointer' }}>📍 {currentCity.name.split(',')[0]}</button>
                   </>
                 )}
                 <button onClick={() => setCurrentTab('swipe')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', opacity: currentTab === 'swipe' ? 1 : 0.4 }}>✨</button>
@@ -353,31 +360,48 @@ export default function App() {
               
               {/* SWIPE TAB */}
               {currentTab === 'swipe' && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '14px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '12px' }}>
+                  
+                  {/* Video Stories Tray */}
+                  <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
+                    {INITIAL_PROFILES.map(p => (
+                      <div key={p.id} onClick={() => setActiveStory(p)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                        <div style={{ width: '54px', height: '54px', borderRadius: '50%', padding: '2px', background: 'linear-gradient(135deg, #f43f5e, #ec4899)' }}>
+                          <img src={p.images[0]} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        </div>
+                        <span style={{ fontSize: '10px', marginTop: '2px', color: colors.text }}>{p.name}</span>
+                      </div>
+                    ))}
+                  </div>
+
                   {currentIndex < filteredProfiles.length ? (
                     <>
-                      <div style={{ width: '100%', height: '390px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
-                        {swipeBadge === 'LIKE' && <div style={{ position: 'absolute', top: '40px', left: '20px', border: '4px solid #22c55e', color: '#22c55e', padding: '4px 16px', borderRadius: '12px', fontSize: '30px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>LIKE</div>}
-                        {swipeBadge === 'NOPE' && <div style={{ position: 'absolute', top: '40px', right: '20px', border: '4px solid #ef4444', color: '#ef4444', padding: '4px 16px', borderRadius: '12px', fontSize: '30px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>NOPE</div>}
+                      <div style={{ width: '100%', height: '360px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                        {swipeBadge === 'LIKE' && <div style={{ position: 'absolute', top: '30px', left: '20px', border: '4px solid #22c55e', color: '#22c55e', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>LIKE</div>}
+                        {swipeBadge === 'NOPE' && <div style={{ position: 'absolute', top: '30px', right: '20px', border: '4px solid #ef4444', color: '#ef4444', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>NOPE</div>}
 
-                        <div style={{ position: 'relative', width: '100%', height: '220px', filter: isBlindDateMode ? 'blur(16px)' : 'none', transition: 'filter 0.3s' }}>
+                        <div style={{ position: 'relative', width: '100%', height: '210px', filter: isBlindDateMode ? 'blur(16px)' : 'none', transition: 'filter 0.3s' }}>
                           <img src={filteredProfiles[currentIndex].images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          {isBlindDateMode && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', background: 'rgba(0,0,0,0.4)', fontSize: '14px' }}>🔒 Blind Date Mode Active</div>}
+                          {isBlindDateMode && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', background: 'rgba(0,0,0,0.4)', fontSize: '13px' }}>🔒 Blind Date Active</div>}
+                          <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '10px', fontSize: '11px', color: '#34d399', fontWeight: 'bold' }}>⚡ {filteredProfiles[currentIndex].matchScore} Match</div>
                         </div>
 
-                        <div style={{ padding: '12px', backgroundColor: colors.cardBg }}>
+                        <div style={{ padding: '10px 12px', backgroundColor: colors.cardBg }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name}, {filteredProfiles[currentIndex].age}</h2>
-                            {filteredProfiles[currentIndex].verified && <span style={{ backgroundColor: '#3b82f6', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '10px' }}>✓ Blue Tick</span>}
+                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name}, {filteredProfiles[currentIndex].age}</h2>
+                            {filteredProfiles[currentIndex].verified && <span style={{ backgroundColor: '#3b82f6', color: '#fff', fontSize: '9px', padding: '2px 5px', borderRadius: '8px' }}>✓ Blue Tick</span>}
                           </div>
-                          <p style={{ fontSize: '12px', color: colors.subText, margin: '4px 0 6px 0' }}>🎵 Spotify: {filteredProfiles[currentIndex].spotify}</p>
-                          <p style={{ fontSize: '12px', margin: '0 0 8px 0' }}>{filteredProfiles[currentIndex].bio}</p>
+                          <p style={{ fontSize: '11px', color: colors.subText, margin: '2px 0 4px 0' }}>👥 {filteredProfiles[currentIndex].mutualFriends} Mutual Friends • 🎵 {filteredProfiles[currentIndex].spotify}</p>
+                          <div style={{ backgroundColor: colors.pillBg, padding: '6px 8px', borderRadius: '8px', fontSize: '11px', margin: '4px 0' }}>
+                            <span style={{ color: '#f43f5e', fontWeight: 'bold' }}>{filteredProfiles[currentIndex].prompts.q}</span>
+                            <div style={{ fontWeight: '500' }}>"{filteredProfiles[currentIndex].prompts.a}"</div>
+                          </div>
                         </div>
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
-                        <button onClick={() => handleSwipe('left')} style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '20px' }}>❌</button>
-                        <button onClick={() => handleSwipe('right')} style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '24px', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
+                        <button onClick={() => handleSwipe('left')} style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '18px' }}>❌</button>
+                        <button onClick={() => handleSwipe('right')} style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '22px', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }}>❤️</button>
                       </div>
                     </>
                   ) : (
@@ -434,7 +458,10 @@ export default function App() {
                       <img src={activeMatch.images[0]} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
                       <h4 style={{ fontSize: '13px', margin: 0 }}>{activeMatch.name}</h4>
                     </div>
-                    <button onClick={() => setShowReportModal(true)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '14px', cursor: 'pointer' }}>⚠️</button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <button onClick={() => setActiveVideoCall(true)} style={{ background: 'none', border: 'none', color: '#34d399', fontSize: '16px', cursor: 'pointer' }} title="Video Call">📹</button>
+                      <button onClick={() => setShowReportModal(true)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '14px', cursor: 'pointer' }}>⚠️</button>
+                    </div>
                   </div>
 
                   <div style={{ flex: 1, padding: '14px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -460,6 +487,10 @@ export default function App() {
                     </div>
                   )}
 
+                  <div style={{ padding: '8px 12px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '6px', overflowX: 'auto' }}>
+                    <button onClick={generateAIIcebreaker} style={{ whiteSpace: 'nowrap', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e', padding: '4px 10px', borderRadius: '14px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>✨ AI Icebreaker</button>
+                  </div>
+
                   <div style={{ padding: '10px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button onClick={() => setShowGifPicker(!showGifPicker)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }}>🎨</button>
                     <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '18px', padding: '8px 14px', fontSize: '12px', color: colors.text, outline: 'none' }} />
@@ -470,23 +501,27 @@ export default function App() {
 
               {/* PROFILE TAB */}
               {currentTab === 'profile' && (
-                <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto' }}>
                   <img src={userProfile.image} alt="" style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #f43f5e', marginBottom: '8px' }} />
-                  
-                  <div style={{ width: '100%', backgroundColor: colors.pillBg, borderRadius: '10px', height: '8px', overflow: 'hidden', margin: '8px 0 4px 0' }}>
-                    <div style={{ width: `${calculateProfileCompletion()}%`, backgroundColor: '#34d399', height: '100%' }}></div>
-                  </div>
-                  <span style={{ fontSize: '11px', color: colors.subText, marginBottom: '12px' }}>Profile Completion: {calculateProfileCompletion()}%</span>
 
                   <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{userProfile.name}, {userProfile.age}</h2>
-                  <p style={{ fontSize: '12px', color: colors.subText, margin: '0 0 16px 0' }}>{userProfile.location}</p>
+                  <p style={{ fontSize: '12px', color: colors.subText, margin: '0 0 12px 0' }}>{userProfile.location}</p>
 
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {!userProfile.verified ? (
-                      <button onClick={verifyProfile} style={{ width: '100%', padding: '12px', borderRadius: '20px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>✓ Get Verified Profile (Blue Tick)</button>
-                    ) : (
-                      <div style={{ padding: '10px', backgroundColor: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold' }}>✓ Verified Profile Active</div>
-                    )}
+                    {/* Incognito Mode Toggle */}
+                    <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '12px 14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold' }}>🕶️ Incognito Mode</div>
+                        <div style={{ fontSize: '10px', color: colors.subText }}>Only visible to people you like</div>
+                      </div>
+                      <button onClick={() => setIsIncognito(!isIncognito)} style={{ padding: '6px 12px', borderRadius: '14px', backgroundColor: isIncognito ? '#3b82f6' : colors.pillBg, color: isIncognito ? '#fff' : colors.text, border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '11px' }}>
+                        {isIncognito ? 'On' : 'Off'}
+                      </button>
+                    </div>
+
+                    {/* AI Bio Generator Button */}
+                    <button onClick={generateAIIcebreaker} onClickCapture={generateAIBio} style={{ width: '100%', padding: '12px', borderRadius: '20px', background: 'linear-gradient(135deg, #a855f7, #6366f1)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>✨ Generate AI Bio</button>
+
                     <button onClick={() => { setIsAuthenticated(false); showToast("Logged out successfully"); }} style={{ width: '100%', padding: '12px', borderRadius: '20px', backgroundColor: colors.pillBg, color: '#ef4444', border: `1px solid ${colors.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🚪 Log Out</button>
                   </div>
                 </div>
@@ -496,14 +531,52 @@ export default function App() {
           </>
         )}
 
+        {/* VIDEO STORIES MODAL */}
+        {activeStory && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: '#000', zIndex: 800, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src={activeStory.images[0]} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>{activeStory.name}'s Story</span>
+              </div>
+              <button onClick={() => setActiveStory(null)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0' }}>
+              <video src={activeStory.storyVideo} autoPlay loop muted style={{ width: '100%', maxHeight: '480px', objectFit: 'cover', borderRadius: '16px' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => { setActiveStory(null); setMatches(prev => [...prev, activeStory]); setActiveMatch(activeStory); setCurrentTab('chat'); }} style={{ flex: 1, padding: '12px', borderRadius: '20px', background: '#f43f5e', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reply to Story</button>
+            </div>
+          </div>
+        )}
+
+        {/* IN-APP VIDEO CALL MODAL */}
+        {activeVideoCall && activeMatch && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: '#09090b', zIndex: 800, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 20px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ color: '#fff', margin: 0, fontSize: '20px' }}>Video Call with {activeMatch.name}</h3>
+              <span style={{ fontSize: '12px', color: '#34d399' }}>Connected (HD)</span>
+            </div>
+            <div style={{ width: '100%', height: '380px', borderRadius: '20px', overflow: 'hidden', backgroundColor: '#18181b', position: 'relative' }}>
+              <img src={activeMatch.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', bottom: '16px', right: '16px', width: '90px', height: '120px', borderRadius: '12px', backgroundColor: '#27272a', border: '2px solid #fff', overflow: 'hidden' }}>
+                <img src={userProfile.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+              <button onClick={() => setActiveVideoCall(false)} style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', fontSize: '20px', cursor: 'pointer' }}>📞</button>
+            </div>
+          </div>
+        )}
+
         {/* REPORT MODAL */}
         {showReportModal && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 600, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
             <div style={{ backgroundColor: colors.headerBg, borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 12px 0' }}>Report or Unmatch</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 12px 0' }}>Report or Block User</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-                {['Inappropriate messages', 'Fake profile or spam', 'Underage user', 'Just want to unmatch'].map((reason, i) => (
-                  <button key={i} onClick={() => { setMatches(prev => prev.filter(m => m.id !== activeMatch.id)); setActiveMatch(null); setShowReportModal(false); setCurrentTab('matches'); showToast("🚫 User unmatched"); }} style={{ padding: '12px', borderRadius: '12px', backgroundColor: colors.pillBg, color: colors.text, border: 'none', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer' }}>{reason}</button>
+                {['Inappropriate messages', 'Fake profile', 'Block permanently'].map((reason, i) => (
+                  <button key={i} onClick={() => { setBlockedUsers(prev => [...prev, activeMatch.id]); setMatches(prev => prev.filter(m => m.id !== activeMatch.id)); setActiveMatch(null); setShowReportModal(false); setCurrentTab('matches'); showToast("🚫 User blocked and reported"); }} style={{ padding: '12px', borderRadius: '12px', backgroundColor: colors.pillBg, color: colors.text, border: 'none', textAlign: 'left', fontWeight: 'bold', cursor: 'pointer' }}>{reason}</button>
                 ))}
               </div>
               <button onClick={() => setShowReportModal(false)} style={{ width: '100%', padding: '12px', borderRadius: '20px', backgroundColor: colors.pillBg, border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
@@ -513,7 +586,7 @@ export default function App() {
 
         {/* PASSPORT MODAL */}
         {showPassportModal && (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 600, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
             <div style={{ backgroundColor: colors.headerBg, borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '20px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 12px 0' }}>Change Location</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
