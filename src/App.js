@@ -83,6 +83,7 @@ export default function App() {
   const [showChatMenu, setShowChatMenu] = useState(false);
   const [showFullProfileModal, setShowFullProfileModal] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [swipeBadge, setSwipeBadge] = useState(null);
 
   // Dynamic Theme Palette
   const isDark = theme === 'dark';
@@ -126,20 +127,31 @@ export default function App() {
     }, 2500);
   };
 
+  const triggerBadge = (type) => {
+    setSwipeBadge(type);
+    setTimeout(() => {
+      setSwipeBadge(null);
+    }, 600);
+  };
+
   const handleSwipe = useCallback((direction) => {
     if (currentIndex >= filteredProfiles.length) return;
     const profile = filteredProfiles[currentIndex];
     setHistory(prev => [...prev, { index: currentIndex, photoIndex: currentPhotoIndex, profile }]);
     
     if (direction === 'super') {
+      triggerBadge('SUPER');
       showToast(`⭐ You sent a Super Like to ${profile.name}!`);
       setMatches((prev) => [...prev, profile]);
       setMatchedProfile(profile);
       setShowMatchModal(true);
     } else if (direction === 'right') {
+      triggerBadge('LIKE');
       setMatches((prev) => [...prev, profile]);
       setMatchedProfile(profile);
       setShowMatchModal(true);
+    } else {
+      triggerBadge('NOPE');
     }
     
     setCurrentIndex((prev) => prev + 1);
@@ -243,6 +255,11 @@ export default function App() {
           85% { opacity: 1; transform: translateY(0); }
           100% { opacity: 0; transform: translateY(-20px); }
         }
+        @keyframes popBadge {
+          0% { transform: scale(0.5) rotate(-15deg); opacity: 0; }
+          50% { transform: scale(1.1) rotate(-15deg); opacity: 1; }
+          100% { transform: scale(1) rotate(-15deg); opacity: 0; }
+        }
       `}</style>
       
       {/* Toast Notification */}
@@ -280,6 +297,17 @@ export default function App() {
                 <>
                   <div style={{ width: '100%', height: '440px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                     
+                    {/* Dynamic Action Stamp Overlay Badges */}
+                    {swipeBadge === 'LIKE' && (
+                      <div style={{ position: 'absolute', top: '40px', left: '20px', border: '4px solid #22c55e', color: '#22c55e', padding: '4px 16px', borderRadius: '12px', fontSize: '32px', fontWeight: '900', letterSpacing: '2px', zIndex: 100, animation: 'popBadge 0.6s ease forwards' }}>LIKE</div>
+                    )}
+                    {swipeBadge === 'NOPE' && (
+                      <div style={{ position: 'absolute', top: '40px', right: '20px', border: '4px solid #ef4444', color: '#ef4444', padding: '4px 16px', borderRadius: '12px', fontSize: '32px', fontWeight: '900', letterSpacing: '2px', zIndex: 100, animation: 'popBadge 0.6s ease forwards' }}>NOPE</div>
+                    )}
+                    {swipeBadge === 'SUPER' && (
+                      <div style={{ position: 'absolute', top: '40px', left: '50%', transform: 'translateX(-50%)', border: '4px solid #3b82f6', color: '#3b82f6', padding: '4px 16px', borderRadius: '12px', fontSize: '32px', fontWeight: '900', letterSpacing: '2px', zIndex: 100, animation: 'popBadge 0.6s ease forwards' }}>SUPER LIKE</div>
+                    )}
+
                     <div style={{ position: 'relative', width: '100%', height: '280px', cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
                       <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       
