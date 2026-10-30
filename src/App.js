@@ -18,6 +18,17 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState('swipe');
   const [maxDistance, setMaxDistance] = useState(10);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+
+  // User Profile State
+  const [userProfile, setUserProfile] = useState({
+    name: 'Alex',
+    age: 25,
+    location: 'New York, USA 🇺🇸',
+    image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80'
+  });
+  const [tempName, setTempName] = useState(userProfile.name);
+  const [tempAge, setTempAge] = useState(userProfile.age);
   
   const filteredProfiles = INITIAL_PROFILES.filter(p => p.distance <= maxDistance);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -49,6 +60,11 @@ export default function App() {
   const generateAIIcebreaker = () => {
     const randomLine = ICEBREAKERS[Math.floor(Math.random() * ICEBREAKERS.length)];
     setInputText(randomLine);
+  };
+
+  const saveProfile = () => {
+    setUserProfile(prev => ({ ...prev, name: tempName, age: Number(tempAge) }));
+    setShowEditProfileModal(false);
   };
 
   return (
@@ -165,11 +181,14 @@ export default function App() {
           {currentTab === 'profile' && (
             <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ width: '100px', height: '100px', borderRadius: '50%', padding: '3px', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', marginBottom: '16px', boxShadow: '0 8px 20px rgba(0,0,0,0.4)' }}>
-                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80" alt="User Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                <img src={userProfile.image} alt="User Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
               </div>
-              <h2 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 4px 0' }}>Alex, 25</h2>
-              <p style={{ fontSize: '13px', color: '#a1a1aa', margin: 0 }}>New York, USA 🇺🇸</p>
-              <div style={{ width: '100%', marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{userProfile.name}, {userProfile.age}</h2>
+              <p style={{ fontSize: '13px', color: '#a1a1aa', margin: '0 0 16px 0' }}>{userProfile.location}</p>
+              
+              <button onClick={() => { setTempName(userProfile.name); setTempAge(userProfile.age); setShowEditProfileModal(true); }} style={{ padding: '8px 20px', borderRadius: '20px', backgroundColor: '#27272a', color: '#f43f5e', border: '1px solid #3f3f46', fontWeight: '600', cursor: 'pointer', fontSize: '13px', marginBottom: '24px' }}>Edit Profile</button>
+
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '14px' }}>Subscription</span><span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.1)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(244,63,94,0.2)' }}>Tinder Gold ✨</span></div>
                 <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '14px' }}>Global Discovery</span><span style={{ fontSize: '12px', fontWeight: 'bold', color: '#34d399' }}>Active</span></div>
               </div>
@@ -177,6 +196,29 @@ export default function App() {
           )}
 
         </div>
+
+        {/* EDIT PROFILE MODAL */}
+        {showEditProfileModal && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <div style={{ backgroundColor: '#18181b', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px', borderTop: '1px solid #27272a' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>Edit Profile</h3>
+                <button onClick={() => setShowEditProfileModal(false)} style={{ background: 'none', border: 'none', color: '#a1a1aa', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Name</label>
+                  <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '14px', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#a1a1aa', display: 'block', marginBottom: '6px' }}>Age</label>
+                  <input type="number" value={tempAge} onChange={(e) => setTempAge(e.target.value)} style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '14px', outline: 'none' }} />
+                </div>
+              </div>
+              <button onClick={saveProfile} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>Save Changes</button>
+            </div>
+          </div>
+        )}
 
         {/* DISTANCE FILTER MODAL */}
         {showFilterModal && (
@@ -204,7 +246,7 @@ export default function App() {
             <h2 style={{ fontSize: '36px', fontStyle: 'italic', fontWeight: '900', color: '#f43f5e', margin: '0 0 8px 0', letterSpacing: '1px' }}>IT'S A MATCH!</h2>
             <p style={{ fontSize: '14px', color: '#d4d4d8', margin: '0 0 32px 0' }}>You and {matchedProfile.name} have liked each other.</p>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px' }}>
-              <div style={{ width: '90px', height: '90px', borderRadius: '50%', border: '4px solid #f43f5e', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}><img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80" alt="Me" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
+              <div style={{ width: '90px', height: '90px', borderRadius: '50%', border: '4px solid #f43f5e', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}><img src={userProfile.image} alt="Me" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
               <div style={{ width: '90px', height: '90px', borderRadius: '50%', border: '4px solid #ec4899', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', marginLeft: '-24px' }}><img src={matchedProfile.image} alt={matchedProfile.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
             </div>
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
