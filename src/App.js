@@ -94,6 +94,10 @@ export default function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(false);
 
+  // Voice Note Recorder States
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordTime, setRecordTime] = useState(0);
+
   // Dynamic Theme Palette
   const isDark = theme === 'dark';
   const colors = {
@@ -163,7 +167,7 @@ export default function App() {
 
   const startCall = () => {
     setActiveCall(true);
-    setCallStatus('Calling...');
+    setCallStatus('Ringing...');
     setCallTimer(0);
     setIsMuted(false);
     setIsSpeaker(false);
@@ -189,6 +193,36 @@ export default function App() {
     }
     return () => clearInterval(interval);
   }, [activeCall, callStatus]);
+
+  useEffect(() => {
+    let interval;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      setRecordTime(0);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
+  const sendVoiceNote = () => {
+    if (!activeMatch) return;
+    const matchId = activeMatch.id;
+    const durationStr = `${recordTime > 0 ? recordTime : 3}s`;
+    const newMsg = { sender: 'me', isVoice: true, duration: durationStr, text: `🎙️ Voice Note (${durationStr})` };
+
+    setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), newMsg] }));
+    setIsRecording(false);
+
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      const randomReply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)];
+      const replyMsg = { sender: 'match', text: randomReply };
+      setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), replyMsg] }));
+    }, 2000);
+  };
 
   const formatTimer = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -507,7 +541,16 @@ export default function App() {
                 <div style={{ backgroundColor: colors.pillBg, padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', color: colors.text }}>You matched with {activeMatch.name}! Say something nice. ✨</div>
                 {(messages[activeMatch.id] || []).map((msg, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', backgroundColor: msg.sender === 'me' ? '#f43f5e' : colors.pillBg, color: '#fff' }}>{msg.text}</div>
+                    <div style={{ padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', backgroundColor: msg.sender === 'me' ? '#f43f5e' : colors.pillBg, color: '#fff' }}>
+                      {msg.isVoice ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>▶️</span>
+                          <span>{msg.text}</span>
+                        </div>
+                      ) : (
+                        msg.text
+                      )}
+                    </div>
                   </div>
                 ))}
                 {isTyping && (
@@ -523,9 +566,22 @@ export default function App() {
                 </button>
               </div>
 
-              <div style={{ padding: '12px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px' }}>
-                <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: colors.text, outline: 'none' }} />
-                <button onClick={sendMessage} style={{ padding: '10px 20px', borderRadius: '20px', backgroundColor: '#f43f5e', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Send</button>
+              <div style={{ padding: '12px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {isRecording ? (
+                  <div style={{ flex: 1, backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', borderRadius: '20px', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#ef4444' }}>Recording... {formatTimer(recordTime)}</span>
+                    </div>
+                    <button onClick={sendVoiceNote} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '12px', padding: '4px 12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Send 🚀</button>
+                  </div>
+                ) : (
+                  <>
+                    <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: colors.text, outline: 'none' }} />
+                    <button onClick={() => setIsRecording(true)} style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Record Voice Note">🎙️</button>
+                    <button onClick={sendMessage} style={{ padding: '10px 18px', borderRadius: '20px', backgroundColor: '#f43f5e', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Send</button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -642,7 +698,7 @@ export default function App() {
                   <input id="photo-upload" type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', color colors.subText, display: 'block', marginBottom: '6px' }}>Name</label>
+                  <label style={{ fontSize: '12px', color: colors.subText, display: 'block', marginBottom: '6px' }}>Name</label>
                   <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text, fontSize: '14px', outline: 'none' }} />
                 </div>
                 <div>
