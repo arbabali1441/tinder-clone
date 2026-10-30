@@ -78,6 +78,7 @@ export default function App() {
   const [theme, setTheme] = useState('dark');
   const [currentTab, setCurrentTab] = useState('swipe');
   const [maxDistance, setMaxDistance] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState(false);
@@ -108,7 +109,13 @@ export default function App() {
   const [tempAge, setTempAge] = useState(userProfile.age);
   const [tempBio, setTempBio] = useState(userProfile.bio);
   
-  const filteredProfiles = INITIAL_PROFILES.filter(p => p.distance <= maxDistance);
+  const filteredProfiles = INITIAL_PROFILES.filter(p => {
+    const matchesDistance = p.distance <= maxDistance;
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          p.interests.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesDistance && matchesSearch;
+  });
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [history, setHistory] = useState([]);
@@ -293,9 +300,21 @@ export default function App() {
           {/* SWIPE TAB */}
           {currentTab === 'swipe' && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
+              
+              {/* Search Filter Bar */}
+              <div style={{ marginBottom: '12px' }}>
+                <input 
+                  type="text" 
+                  placeholder="🔍 Search name or interest (e.g. Coffee, Jessica)..." 
+                  value={searchQuery} 
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentIndex(0); }} 
+                  style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: colors.text, outline: 'none', boxSizing: 'border-box' }} 
+                />
+              </div>
+
               {currentIndex < filteredProfiles.length ? (
                 <>
-                  <div style={{ width: '100%', height: '440px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                  <div style={{ width: '100%', height: '390px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                     
                     {/* Dynamic Action Stamp Overlay Badges */}
                     {swipeBadge === 'LIKE' && (
@@ -308,7 +327,7 @@ export default function App() {
                       <div style={{ position: 'absolute', top: '40px', left: '50%', transform: 'translateX(-50%)', border: '4px solid #3b82f6', color: '#3b82f6', padding: '4px 16px', borderRadius: '12px', fontSize: '32px', fontWeight: '900', letterSpacing: '2px', zIndex: 100, animation: 'popBadge 0.6s ease forwards' }}>SUPER LIKE</div>
                     )}
 
-                    <div style={{ position: 'relative', width: '100%', height: '280px', cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
+                    <div style={{ position: 'relative', width: '100%', height: '240px', cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
                       <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       
                       {/* Status & Activity Badge */}
@@ -331,38 +350,38 @@ export default function App() {
                       )}
                     </div>
 
-                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', backgroundColor: colors.cardBg, cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
+                    <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', backgroundColor: colors.cardBg, cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: colors.text }}>{filteredProfiles[currentIndex].name},</h2>
-                        <span style={{ fontSize: '18px', fontWeight: '300', color: colors.subText }}>{filteredProfiles[currentIndex].age}</span>
+                        <h2 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0, color: colors.text }}>{filteredProfiles[currentIndex].name},</h2>
+                        <span style={{ fontSize: '16px', fontWeight: '300', color: colors.subText }}>{filteredProfiles[currentIndex].age}</span>
                         {filteredProfiles[currentIndex].verified && (
                           <span style={{ backgroundColor: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '10px' }}>✓ Verified</span>
                         )}
                       </div>
-                      <p style={{ fontSize: '12px', color: colors.subText, margin: '4px 0 8px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
-                      <p style={{ fontSize: '12px', color: colors.text, margin: '0 0 10px 0', lineHeight: '1.4' }}>{filteredProfiles[currentIndex].bio}</p>
+                      <p style={{ fontSize: '12px', color: colors.subText, margin: '2px 0 6px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
+                      <p style={{ fontSize: '12px', color: colors.text, margin: '0 0 8px 0', lineHeight: '1.3' }}>{filteredProfiles[currentIndex].bio}</p>
                       
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                         {filteredProfiles[currentIndex].interests.map((tag, i) => (
-                          <span key={i} style={{ fontSize: '11px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, padding: '4px 10px', borderRadius: '20px', color: colors.text }}>{tag}</span>
+                          <span key={i} style={{ fontSize: '11px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, padding: '3px 8px', borderRadius: '20px', color: colors.text }}>{tag}</span>
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', paddingBottom: '6px' }}>
-                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '16px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind (↓ Key)">⏪</button>
-                    <button onClick={() => handleSwipe('left')} style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Dislike (← Key)">❌</button>
-                    <button onClick={() => handleSwipe('super')} style={{ width: '46px', height: '46px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like (↑ Key)">⭐</button>
-                    <button onClick={() => handleSwipe('right')} style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }} title="Like (→ Key)">❤️</button>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', paddingBottom: '4px' }}>
+                    <button onClick={handleRewind} disabled={history.length === 0} style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: history.length === 0 ? 'not-allowed' : 'pointer', fontSize: '15px', opacity: history.length === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Rewind (↓ Key)">⏪</button>
+                    <button onClick={() => handleSwipe('left')} style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Dislike (← Key)">❌</button>
+                    <button onClick={() => handleSwipe('super')} style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Super Like (↑ Key)">⭐</button>
+                    <button onClick={() => handleSwipe('right')} style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', border: 'none', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(244,63,94,0.4)' }} title="Like (→ Key)">❤️</button>
                   </div>
                 </>
               ) : (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px' }}>
                   <span style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</span>
-                  <h3 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 8px 0', color: colors.text }}>No more profiles in this range!</h3>
-                  <p style={{ fontSize: '14px', color: colors.subText, margin: '0 0 24px 0' }}>Try increasing your distance filter or reset deck.</p>
-                  <button onClick={() => { setCurrentIndex(0); setHistory([]); }} style={{ padding: '12px 24px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
+                  <h3 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 8px 0', color: colors.text }}>No profiles found!</h3>
+                  <p style={{ fontSize: '14px', color: colors.subText, margin: '0 0 24px 0' }}>Try clearing your search query or expanding distance filter.</p>
+                  <button onClick={() => { setSearchQuery(''); setCurrentIndex(0); setHistory([]); }} style={{ padding: '12px 24px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Search & Deck</button>
                 </div>
               )}
             </div>
