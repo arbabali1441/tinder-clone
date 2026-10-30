@@ -12,9 +12,8 @@ const Icons = {
   Video: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
   Mic: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
   Attachment: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>,
-  Settings: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
   Location: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>,
-  Rewind: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+  Palette: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.504 5.555-5.555C21.965 6.48 17.48 2 12 2z"/></svg>
 };
 
 const INITIAL_PROFILES = [
@@ -68,6 +67,19 @@ const INITIAL_PROFILES = [
   }
 ];
 
+const GIF_LIST = [
+  "https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif",
+  "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif",
+  "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif",
+  "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif"
+];
+
+const AI_ICEBREAKERS = [
+  "If you could only eat one meal for the rest of your life, what is it? 🍕",
+  "What's your absolute favorite spot in the city? 🏙️",
+  "Quick! Cats or dogs? Choose wisely 🐶🐱"
+];
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('tinder_auth') === 'true');
   const [authMode, setAuthMode] = useState('welcome');
@@ -108,6 +120,7 @@ export default function App() {
   const [isBlindDateMode, setIsBlindDateMode] = useState(false);
   const [showPassportModal, setShowPassportModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false); // FIXED
   const [toastMessage, setToastMessage] = useState(null);
   const [swipeBadge, setSwipeBadge] = useState(null);
 
@@ -245,6 +258,18 @@ export default function App() {
     if (!text.trim()) return;
     sendMsgObj({ text });
     setInputText('');
+  };
+
+  // FIXED sendGif function
+  const sendGif = (url) => {
+    sendMsgObj({ image: url, fileName: 'GIF' });
+    setShowGifPicker(false);
+  };
+
+  const generateAIIcebreaker = () => {
+    const randomIce = AI_ICEBREAKERS[Math.floor(Math.random() * AI_ICEBREAKERS.length)];
+    setInputText(randomIce);
+    showToast("🤖 AI suggested an icebreaker!");
   };
 
   const handleMessageReaction = (msgId, emoji) => {
@@ -541,11 +566,16 @@ export default function App() {
 
                   {showGifPicker && (
                     <div style={{ padding: '8px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '6px', overflowX: 'auto' }}>
-                      {["https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif", "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif"].map((g, i) => (
+                      {GIF_LIST.map((g, i) => (
                         <img key={i} src={g} alt="" onClick={() => sendGif(g)} style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }} />
                       ))}
                     </div>
                   )}
+
+                  <div style={{ padding: '8px 12px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '6px', overflowX: 'auto' }}>
+                    <button onClick={generateAIIcebreaker} style={{ whiteSpace: 'nowrap', background: colors.pillBg, border: `1px solid ${colors.border}`, color: colors.text, padding: '4px 10px', borderRadius: '14px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>✨ AI Icebreaker</button>
+                    <button onClick={() => setShowGifPicker(!showGifPicker)} style={{ whiteSpace: 'nowrap', background: colors.pillBg, border: `1px solid ${colors.border}`, color: colors.text, padding: '4px 10px', borderRadius: '14px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>🎨 GIFs</button>
+                  </div>
 
                   <div style={{ padding: '10px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px', alignItems: 'center' }}>
                     {isRecording ? (
@@ -582,6 +612,19 @@ export default function App() {
                       <button onClick={() => setTheme(isDark ? 'light' : 'dark')} style={{ padding: '6px 12px', borderRadius: '14px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', color: colors.text }}>
                         {isDark ? '🌙 Dark' : '☀️ Light'}
                       </button>
+                    </div>
+
+                    <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '12px 14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold' }}>Accent Palette</span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {[
+                          { name: 'Tinder', color: '#f43f5e' },
+                          { name: 'Bumble', color: '#eab308' },
+                          { name: 'Hinge', color: '#8b5cf6' }
+                        ].map(acc => (
+                          <button key={acc.name} onClick={() => setAccentColor(acc.color)} style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: acc.color, border: accentColor === acc.color ? '2px solid #fff' : 'none', cursor: 'pointer' }} />
+                        ))}
+                      </div>
                     </div>
 
                     {!userProfile.verified ? (
