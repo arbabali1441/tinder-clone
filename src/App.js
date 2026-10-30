@@ -72,6 +72,7 @@ export default function App() {
   const [maxDistance, setMaxDistance] = useState(10);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showChatMenu, setShowChatMenu] = useState(false);
 
   // Dynamic Theme Palette
   const isDark = theme === 'dark';
@@ -159,6 +160,20 @@ export default function App() {
     }, 2000);
   };
 
+  const clearChat = () => {
+    if (!activeMatch) return;
+    setMessages(prev => ({ ...prev, [activeMatch.id]: [] }));
+    setShowChatMenu(false);
+  };
+
+  const unmatchUser = () => {
+    if (!activeMatch) return;
+    setMatches(prev => prev.filter(m => m.id !== activeMatch.id));
+    setActiveMatch(null);
+    setShowChatMenu(false);
+    setCurrentTab('matches');
+  };
+
   const generateAIIcebreaker = () => {
     const randomLine = ICEBREAKERS[Math.floor(Math.random() * ICEBREAKERS.length)];
     setInputText(randomLine);
@@ -199,18 +214,15 @@ export default function App() {
                 <>
                   <div style={{ width: '100%', height: '440px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                     
-                    {/* Photo Carousel Container */}
                     <div style={{ position: 'relative', width: '100%', height: '280px' }}>
                       <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       
-                      {/* Photo Indicator Bars */}
                       <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', gap: '4px', zIndex: 10 }}>
                         {filteredProfiles[currentIndex].images.map((_, idx) => (
                           <div key={idx} style={{ flex: 1, height: '3px', backgroundColor: idx === currentPhotoIndex ? '#fff' : 'rgba(255,255,255,0.4)', borderRadius: '2px', transition: 'background 0.3s' }} />
                         ))}
                       </div>
 
-                      {/* Carousel Navigation Buttons */}
                       {currentPhotoIndex > 0 && (
                         <button onClick={prevPhoto} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
                       )}
@@ -279,16 +291,28 @@ export default function App() {
 
           {/* CHAT TAB */}
           {currentTab === 'chat' && activeMatch && (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: colors.bg }}>
-              <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', backgroundColor: colors.headerBg, borderBottom: `1px solid ${colors.border}` }}>
-                <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', color: '#f43f5e', fontWeight: 'bold', cursor: 'pointer', marginRight: '12px', fontSize: '14px' }}>← Back</button>
-                <img src={activeMatch.images[0]} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', marginRight: '10px' }} />
-                <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 'bold', margin: 0, color: colors.text }}>{activeMatch.name}</h4>
-                  <span style={{ fontSize: '11px', color: '#34d399' }}>● Online</span>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: colors.bg, position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: colors.headerBg, borderBottom: `1px solid ${colors.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', color: '#f43f5e', fontWeight: 'bold', cursor: 'pointer', marginRight: '12px', fontSize: '14px' }}>← Back</button>
+                  <img src={activeMatch.images[0]} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', marginRight: '10px' }} />
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 'bold', margin: 0, color: colors.text }}>{activeMatch.name}</h4>
+                    <span style={{ fontSize: '11px', color: '#34d399' }}>● Online</span>
+                  </div>
                 </div>
+                <button onClick={() => setShowChatMenu(!showChatMenu)} style={{ background: 'none', border: 'none', color: colors.text, fontSize: '20px', cursor: 'pointer', padding: '4px' }}>⋮</button>
               </div>
-              <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+              {/* Chat Dropdown Menu */}
+              {showChatMenu && (
+                <div style={{ position: 'absolute', right: '16px', top: '60px', backgroundColor: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', zIndex: 50, width: '160px', overflow: 'hidden' }}>
+                  <button onClick={clearChat} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: colors.text, fontSize: '13px', textAlign: 'left', cursor: 'pointer', borderBottom: `1px solid ${colors.border}` }}>🧹 Clear Chat</button>
+                  <button onClick={unmatchUser} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: '#f43f5e', fontSize: '13px', textAlign: 'left', cursor: 'pointer', fontWeight: 'bold' }}>🚫 Unmatch</button>
+                </div>
+              )}
+
+              <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }} onClick={() => setShowChatMenu(false)}>
                 <div style={{ backgroundColor: colors.pillBg, padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', color: colors.text }}>You matched with {activeMatch.name}! Say something nice. ✨</div>
                 {(messages[activeMatch.id] || []).map((msg, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start' }}>
