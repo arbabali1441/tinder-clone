@@ -6,6 +6,8 @@ const INITIAL_PROFILES = [
     name: 'Jessica', 
     age: 25, 
     distance: 3, 
+    verified: true,
+    status: 'Active recently',
     bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', 
     interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️', 'Photography 📸', 'Desserts 🍰'], 
     images: [
@@ -19,6 +21,8 @@ const INITIAL_PROFILES = [
     name: 'Michael', 
     age: 27, 
     distance: 8, 
+    verified: false,
+    status: 'Active 2h ago',
     bio: 'Software developer by day, guitarist by night 🎸. Always down for live music or a food adventure.', 
     interests: ['Coding 💻', 'Guitar 🎸', 'Live Music 🎶', 'Burgers 🍔', 'Tech 🚀'], 
     images: [
@@ -31,6 +35,8 @@ const INITIAL_PROFILES = [
     name: 'Sophia', 
     age: 24, 
     distance: 2, 
+    verified: true,
+    status: 'Online now ✨',
     bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', 
     interests: ['Hiking 🥾', 'Fitness 💪', 'Sunsets 🌅', 'Yoga 🧘‍♀️', 'Nature 🌲'], 
     images: [
@@ -43,6 +49,8 @@ const INITIAL_PROFILES = [
     name: 'David', 
     age: 29, 
     distance: 12, 
+    verified: false,
+    status: 'Active yesterday',
     bio: 'Architect and photography enthusiast 📸. Let us grab a drink and talk about city designs.', 
     interests: ['Architecture 🏛️', 'Design ✨', 'Wine 🍷', 'Running 🏃‍♂️', 'Art 🎨'], 
     images: [
@@ -253,7 +261,13 @@ export default function App() {
                     <div style={{ position: 'relative', width: '100%', height: '280px', cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
                       <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       
-                      <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', gap: '4px', zIndex: 10 }}>
+                      {/* Status & Activity Badge */}
+                      <div style={{ position: 'absolute', top: '20px', left: '12px', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 10 }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: filteredProfiles[currentIndex].status.includes('Online') ? '#34d399' : '#facc15' }}></span>
+                        <span style={{ fontSize: '11px', color: '#fff', fontWeight: '500' }}>{filteredProfiles[currentIndex].status}</span>
+                      </div>
+
+                      <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', gap: '4px', zIndex: 10, marginTop: '28px' }}>
                         {filteredProfiles[currentIndex].images.map((_, idx) => (
                           <div key={idx} style={{ flex: 1, height: '3px', backgroundColor: idx === currentPhotoIndex ? '#fff' : 'rgba(255,255,255,0.4)', borderRadius: '2px', transition: 'background 0.3s' }} />
                         ))}
@@ -268,9 +282,12 @@ export default function App() {
                     </div>
 
                     <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', backgroundColor: colors.cardBg, cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: colors.text }}>{filteredProfiles[currentIndex].name},</h2>
                         <span style={{ fontSize: '18px', fontWeight: '300', color: colors.subText }}>{filteredProfiles[currentIndex].age}</span>
+                        {filteredProfiles[currentIndex].verified && (
+                          <span style={{ backgroundColor: '#3b82f6', color: '#fff', fontSize: '10px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '10px' }}>✓ Verified</span>
+                        )}
                       </div>
                       <p style={{ fontSize: '12px', color: colors.subText, margin: '4px 0 8px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
                       <p style={{ fontSize: '12px', color: colors.text, margin: '0 0 10px 0', lineHeight: '1.4' }}>{filteredProfiles[currentIndex].bio}</p>
@@ -412,8 +429,11 @@ export default function App() {
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                 <h2 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: colors.text }}>{filteredProfiles[currentIndex].name},</h2>
                 <span style={{ fontSize: '22px', fontWeight: '300', color: colors.subText }}>{filteredProfiles[currentIndex].age}</span>
+                {filteredProfiles[currentIndex].verified && (
+                  <span style={{ backgroundColor: '#3b82f6', color: '#fff', fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px' }}>✓ Verified</span>
+                )}
               </div>
-              <p style={{ fontSize: '14px', color: colors.subText, margin: 0 }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
+              <p style={{ fontSize: '14px', color: colors.subText, margin: 0 }}>📍 {filteredProfiles[currentIndex].distance} km away • {filteredProfiles[currentIndex].status}</p>
               <hr style={{ borderColor: colors.border, margin: '4px 0' }} />
               <div>
                 <h4 style={{ fontSize: '14px', color: '#f43f5e', marginBottom: '6px' }}>About Me</h4>
