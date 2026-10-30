@@ -1,10 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const INITIAL_PROFILES = [
-  { id: 1, name: 'Jessica', age: 25, distance: 3, bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️', 'Photography 📸'], image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
-  { id: 2, name: 'Michael', age: 27, distance: 8, bio: 'Software developer by day, guitarist by night 🎸. Always down for live music or a food adventure.', interests: ['Coding 💻', 'Guitar 🎸', 'Live Music 🎶', 'Burgers 🍔'], image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80' },
-  { id: 3, name: 'Sophia', age: 24, distance: 2, bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', interests: ['Hiking 🥾', 'Fitness 💪', 'Sunsets 🌅', 'Yoga 🧘‍♀️'], image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80' },
-  { id: 4, name: 'David', age: 29, distance: 12, bio: 'Architect and photography enthusiast 📸. Let us grab a drink and talk about city designs.', interests: ['Architecture 🏛️', 'Design ✨', 'Wine 🍷', 'Running 🏃‍♂️'], image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80' }
+  { 
+    id: 1, 
+    name: 'Jessica', 
+    age: 25, 
+    distance: 3, 
+    bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', 
+    interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️', 'Photography 📸'], 
+    images: [
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80'
+    ] 
+  },
+  { 
+    id: 2, 
+    name: 'Michael', 
+    age: 27, 
+    distance: 8, 
+    bio: 'Software developer by day, guitarist by night 🎸. Always down for live music or a food adventure.', 
+    interests: ['Coding 💻', 'Guitar 🎸', 'Live Music 🎶', 'Burgers 🍔'], 
+    images: [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80'
+    ] 
+  },
+  { 
+    id: 3, 
+    name: 'Sophia', 
+    age: 24, 
+    distance: 2, 
+    bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', 
+    interests: ['Hiking 🥾', 'Fitness 💪', 'Sunsets 🌅', 'Yoga 🧘‍♀️'], 
+    images: [
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80'
+    ] 
+  },
+  { 
+    id: 4, 
+    name: 'David', 
+    age: 29, 
+    distance: 12, 
+    bio: 'Architect and photography enthusiast 📸. Let us grab a drink and talk about city designs.', 
+    interests: ['Architecture 🏛️', 'Design ✨', 'Wine 🍷', 'Running 🏃‍♂️'], 
+    images: [
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=800&q=80'
+    ] 
+  }
 ];
 
 const ICEBREAKERS = [
@@ -51,6 +96,7 @@ export default function App() {
   
   const filteredProfiles = INITIAL_PROFILES.filter(p => p.distance <= maxDistance);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [history, setHistory] = useState([]);
   const [matches, setMatches] = useState([]);
   const [activeMatch, setActiveMatch] = useState(null);
@@ -62,7 +108,7 @@ export default function App() {
 
   const handleSwipe = (direction) => {
     const profile = filteredProfiles[currentIndex];
-    setHistory(prev => [...prev, { index: currentIndex, profile }]);
+    setHistory(prev => [...prev, { index: currentIndex, photoIndex: currentPhotoIndex, profile }]);
     
     if (direction === 'right' || direction === 'super') {
       setMatches((prev) => [...prev, profile]);
@@ -70,6 +116,7 @@ export default function App() {
       setShowMatchModal(true);
     }
     setCurrentIndex((prev) => prev + 1);
+    setCurrentPhotoIndex(0);
   };
 
   const handleRewind = () => {
@@ -77,6 +124,22 @@ export default function App() {
     const lastAction = history[history.length - 1];
     setHistory(prev => prev.slice(0, prev.length - 1));
     setCurrentIndex(lastAction.index);
+    setCurrentPhotoIndex(lastAction.photoIndex);
+  };
+
+  const nextPhoto = (e) => {
+    e.stopPropagation();
+    const currentProfile = filteredProfiles[currentIndex];
+    if (currentPhotoIndex < currentProfile.images.length - 1) {
+      setCurrentPhotoIndex(prev => prev + 1);
+    }
+  };
+
+  const prevPhoto = (e) => {
+    e.stopPropagation();
+    if (currentPhotoIndex > 0) {
+      setCurrentPhotoIndex(prev => prev - 1);
+    }
   };
 
   const sendMessage = () => {
@@ -135,7 +198,27 @@ export default function App() {
               {currentIndex < filteredProfiles.length ? (
                 <>
                   <div style={{ width: '100%', height: '440px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
-                    <img src={filteredProfiles[currentIndex].image} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '280px', objectFit: 'cover' }} />
+                    
+                    {/* Photo Carousel Container */}
+                    <div style={{ position: 'relative', width: '100%', height: '280px' }}>
+                      <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      
+                      {/* Photo Indicator Bars */}
+                      <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', gap: '4px', zIndex: 10 }}>
+                        {filteredProfiles[currentIndex].images.map((_, idx) => (
+                          <div key={idx} style={{ flex: 1, height: '3px', backgroundColor: idx === currentPhotoIndex ? '#fff' : 'rgba(255,255,255,0.4)', borderRadius: '2px', transition: 'background 0.3s' }} />
+                        ))}
+                      </div>
+
+                      {/* Carousel Navigation Buttons */}
+                      {currentPhotoIndex > 0 && (
+                        <button onClick={prevPhoto} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
+                      )}
+                      {currentPhotoIndex < filteredProfiles[currentIndex].images.length - 1 && (
+                        <button onClick={nextPhoto} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+                      )}
+                    </div>
+
                     <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', backgroundColor: colors.cardBg }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                         <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: colors.text }}>{filteredProfiles[currentIndex].name},</h2>
@@ -184,7 +267,7 @@ export default function App() {
                   {matches.map((m) => (
                     <div key={m.id} onClick={() => { setActiveMatch(m); setCurrentTab('chat'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
                       <div style={{ width: '64px', height: '64px', borderRadius: '50%', padding: '2px', background: 'linear-gradient(135deg, #f43f5e, #ec4899)', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
-                        <img src={m.image} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                        <img src={m.images[0]} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                       </div>
                       <span style={{ fontSize: '12px', marginTop: '6px', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: colors.text }}>{m.name}</span>
                     </div>
@@ -199,7 +282,7 @@ export default function App() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: colors.bg }}>
               <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', backgroundColor: colors.headerBg, borderBottom: `1px solid ${colors.border}` }}>
                 <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', color: '#f43f5e', fontWeight: 'bold', cursor: 'pointer', marginRight: '12px', fontSize: '14px' }}>← Back</button>
-                <img src={activeMatch.image} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', marginRight: '10px' }} />
+                <img src={activeMatch.images[0]} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', marginRight: '10px' }} />
                 <div>
                   <h4 style={{ fontSize: '14px', fontWeight: 'bold', margin: 0, color: colors.text }}>{activeMatch.name}</h4>
                   <span style={{ fontSize: '11px', color: '#34d399' }}>● Online</span>
@@ -308,7 +391,7 @@ export default function App() {
             <p style={{ fontSize: '14px', color: '#d4d4d8', margin: '0 0 32px 0' }}>You and {matchedProfile.name} have liked each other.</p>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px' }}>
               <div style={{ width: '90px', height: '90px', borderRadius: '50%', border: '4px solid #f43f5e', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}><img src={userProfile.image} alt="Me" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
-              <div style={{ width: '90px', height: '90px', borderRadius: '50%', border: '4px solid #ec4899', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', marginLeft: '-24px' }}><img src={matchedProfile.image} alt={matchedProfile.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
+              <div style={{ width: '90px', height: '90px', borderRadius: '50%', border: '4px solid #ec4899', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', marginLeft: '-24px' }}><img src={matchedProfile.images[0]} alt={matchedProfile.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
             </div>
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <button onClick={() => { setShowMatchModal(false); setActiveMatch(matchedProfile); setCurrentTab('chat'); }} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>Send Message</button>
