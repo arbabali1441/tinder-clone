@@ -79,6 +79,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState('swipe');
   const [maxDistance, setMaxDistance] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
+  const [superLikesLeft, setSuperLikesLeft] = useState(3);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState(false);
@@ -144,26 +145,34 @@ export default function App() {
   const handleSwipe = useCallback((direction) => {
     if (currentIndex >= filteredProfiles.length) return;
     const profile = filteredProfiles[currentIndex];
-    setHistory(prev => [...prev, { index: currentIndex, photoIndex: currentPhotoIndex, profile }]);
-    
+
     if (direction === 'super') {
+      if (superLikesLeft <= 0) {
+        showToast("⚠️ No Super Likes left today!");
+        return;
+      }
+      setSuperLikesLeft(prev => prev - 1);
       triggerBadge('SUPER');
-      showToast(`⭐ You sent a Super Like to ${profile.name}!`);
-      setMatches((prev) => [...prev, profile]);
-      setMatchedProfile(profile);
-      setShowMatchModal(true);
-    } else if (direction === 'right') {
-      triggerBadge('LIKE');
+      showToast(`⭐ You sent a Super Like to ${profile.name}! (${superLikesLeft - 1} left)`);
+      setHistory(prev => [...prev, { index: currentIndex, photoIndex: currentPhotoIndex, profile }]);
       setMatches((prev) => [...prev, profile]);
       setMatchedProfile(profile);
       setShowMatchModal(true);
     } else {
-      triggerBadge('NOPE');
+      setHistory(prev => [...prev, { index: currentIndex, photoIndex: currentPhotoIndex, profile }]);
+      if (direction === 'right') {
+        triggerBadge('LIKE');
+        setMatches((prev) => [...prev, profile]);
+        setMatchedProfile(profile);
+        setShowMatchModal(true);
+      } else {
+        triggerBadge('NOPE');
+      }
     }
     
     setCurrentIndex((prev) => prev + 1);
     setCurrentPhotoIndex(0);
-  }, [currentIndex, filteredProfiles, currentPhotoIndex]);
+  }, [currentIndex, filteredProfiles, currentPhotoIndex, superLikesLeft]);
 
   const handleRewind = useCallback(() => {
     if (history.length === 0) return;
@@ -301,20 +310,23 @@ export default function App() {
           {currentTab === 'swipe' && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
               
-              {/* Search Filter Bar */}
-              <div style={{ marginBottom: '12px' }}>
+              {/* Search Filter & Super Likes Counter Bar */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center' }}>
                 <input 
                   type="text" 
-                  placeholder="🔍 Search name or interest (e.g. Coffee, Jessica)..." 
+                  placeholder="🔍 Search name or interest..." 
                   value={searchQuery} 
                   onChange={(e) => { setSearchQuery(e.target.value); setCurrentIndex(0); }} 
-                  style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: colors.text, outline: 'none', boxSizing: 'border-box' }} 
+                  style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '20px', padding: '10px 14px', fontSize: '12px', color: colors.text, outline: 'none' }} 
                 />
+                <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '8px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', color: '#3b82f6', whiteSpace: 'nowrap' }}>
+                  ⭐ {superLikesLeft} left
+                </div>
               </div>
 
               {currentIndex < filteredProfiles.length ? (
                 <>
-                  <div style={{ width: '100%', height: '390px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                  <div style={{ width: '100%', height: '380px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                     
                     {/* Dynamic Action Stamp Overlay Badges */}
                     {swipeBadge === 'LIKE' && (
@@ -327,7 +339,7 @@ export default function App() {
                       <div style={{ position: 'absolute', top: '40px', left: '50%', transform: 'translateX(-50%)', border: '4px solid #3b82f6', color: '#3b82f6', padding: '4px 16px', borderRadius: '12px', fontSize: '32px', fontWeight: '900', letterSpacing: '2px', zIndex: 100, animation: 'popBadge 0.6s ease forwards' }}>SUPER LIKE</div>
                     )}
 
-                    <div style={{ position: 'relative', width: '100%', height: '240px', cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
+                    <div style={{ position: 'relative', width: '100%', height: '230px', cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
                       <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       
                       {/* Status & Activity Badge */}
@@ -381,7 +393,7 @@ export default function App() {
                   <span style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</span>
                   <h3 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 8px 0', color: colors.text }}>No profiles found!</h3>
                   <p style={{ fontSize: '14px', color: colors.subText, margin: '0 0 24px 0' }}>Try clearing your search query or expanding distance filter.</p>
-                  <button onClick={() => { setSearchQuery(''); setCurrentIndex(0); setHistory([]); }} style={{ padding: '12px 24px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Search & Deck</button>
+                  <button onClick={() => { setSearchQuery(''); setCurrentIndex(0); setHistory([]); setSuperLikesLeft(3); }} style={{ padding: '12px 24px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Search & Deck</button>
                 </div>
               )}
             </div>
