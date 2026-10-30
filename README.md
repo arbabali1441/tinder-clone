@@ -96,8 +96,10 @@
 ### Quick Setup
 Clone the repository and run the following commands in your terminal:
 
-```bash
+``
 # Install dependencies
+
+```bash
 npm install
 ```
 # Start the development server
