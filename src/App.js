@@ -1,5 +1,22 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
+// Pro SVG Icons for a clean UI
+const Icons = {
+  Sparkle: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"/></svg>,
+  Heart: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>,
+  XMark: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+  Star: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  Message: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+  User: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  Phone: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>,
+  Video: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
+  Mic: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+  Attachment: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>,
+  Settings: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
+  Location: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+  Rewind: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+};
+
 const INITIAL_PROFILES = [
   { 
     id: 1, 
@@ -48,50 +65,7 @@ const INITIAL_PROFILES = [
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80'
     ] 
-  },
-  { 
-    id: 3, 
-    name: 'Sophia', 
-    age: 24, 
-    gender: 'female',
-    zodiac: 'Aries ♈',
-    intent: 'New friends 👋',
-    lat: 51.5074, lng: -0.1278,
-    verified: true,
-    status: 'Online now ✨',
-    matchScore: '97%',
-    mutualFriends: 4,
-    lounge: 'Foodies 🍕',
-    bio: 'Sunset chaser 🌅 and fitness enthusiast.', 
-    interests: ['Hiking 🥾', 'Fitness 💪', 'Nature 🌲'], 
-    spotify: 'Dua Lipa - Levitating',
-    poll: { question: "Morning or Night person?", options: ["Morning", "Night", "Both"], answer: 0 },
-    prompts: { q: "Together, we could...", a: "Explore hidden hiking trails and conquer mountains ⛰️" },
-    storyVideo: 'https://assets.mixkit.co/videos/preview/mixkit-woman-doing-yoga-in-a-living-room-42867-large.mp4',
-    images: [
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80'
-    ] 
   }
-];
-
-const GIF_LIST = [
-  "https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif",
-  "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif",
-  "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif",
-  "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif"
-];
-
-const AI_BIOS = [
-  "Tech nerd by day, coffee connoisseur by night ☕. Let's debate pineapple pizza!",
-  "Always chasing sunsets 🌅, good music 🎶, and amazing food adventures.",
-  "Here for a good time and deep conversations about architecture and AI 🚀."
-];
-
-const AI_ICEBREAKERS = [
-  "If you could only eat one meal for the rest of your life, what is it? 🍕",
-  "What's your absolute favorite spot in the city? 🏙️",
-  "Quick! Cats or dogs? Choose wisely 🐶🐱"
 ];
 
 export default function App() {
@@ -114,21 +88,18 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentCity, setCurrentCity] = useState({ name: 'Dubai, UAE', lat: 25.2048, lng: 55.2708 });
 
-  // Swipe Limits & Countdown Timer
   const [swipesLeft, setSwipesLeft] = useState(45);
   const [resetTimer, setResetTimer] = useState(43200);
 
-  // New Features States
   const [isIncognito, setIsIncognito] = useState(false);
   const [activeStory, setActiveStory] = useState(null);
   const [activeVideoCall, setActiveVideoCall] = useState(false);
-  const [arFilter, setArFilter] = useState('none'); // 'none' | 'sunglasses' | 'hearts'
+  const [arFilter, setArFilter] = useState('none');
   const [blockedUsers, setBlockedUsers] = useState(() => JSON.parse(localStorage.getItem('tinder_blocked') || '[]'));
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [selectedLounge, setSelectedLounge] = useState('All');
   const [pollAnswers, setPollAnswers] = useState({});
 
-  // Voice Note Recording
   const [isRecording, setIsRecording] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
   const mediaRecorderRef = useRef(null);
@@ -137,7 +108,6 @@ export default function App() {
   const [isBlindDateMode, setIsBlindDateMode] = useState(false);
   const [showPassportModal, setShowPassportModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showGifPicker, setShowGifPicker] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [swipeBadge, setSwipeBadge] = useState(null);
 
@@ -159,7 +129,7 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [history, setHistory] = useState([]);
-  const [likesYouList] = useState([INITIAL_PROFILES[0], INITIAL_PROFILES[2]]);
+  const [likesYouList] = useState([INITIAL_PROFILES[0]]);
   const [matches, setMatches] = useState(() => JSON.parse(localStorage.getItem('tinder_matches') || '[]'));
   const [activeMatch, setActiveMatch] = useState(null);
   const [messages, setMessages] = useState(() => JSON.parse(localStorage.getItem('tinder_messages') || '{}'));
@@ -175,20 +145,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem('tinder_matches', JSON.stringify(matches)); }, [matches]);
   useEffect(() => { localStorage.setItem('tinder_messages', JSON.stringify(messages)); }, [messages]);
   useEffect(() => { localStorage.setItem('tinder_blocked', JSON.stringify(blockedUsers)); }, [blockedUsers]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setResetTimer(prev => (prev > 0 ? prev - 1 : 43200));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const formatCountdown = (secs) => {
-    const h = Math.floor(secs / 3600);
-    const m = Math.floor((secs % 3600) / 60);
-    const s = secs % 60;
-    return `${h}h ${m}m ${s}s`;
-  };
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -217,8 +173,7 @@ export default function App() {
     const matchesDistance = dist <= maxDistance;
     const matchesAge = p.age >= minAge && p.age <= maxAge;
     const matchesGender = genderFilter === 'all' || p.gender === genderFilter;
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.interests.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesDistance && matchesAge && matchesGender && matchesSearch;
+    return matchesDistance && matchesAge && matchesGender;
   });
 
   const handleAuthSubmit = () => {
@@ -226,32 +181,21 @@ export default function App() {
       showToast("⚠️ Please fill in all fields");
       return;
     }
-    if (authMode === 'signup' && !fullName) {
-      showToast("⚠️ Please enter your full name");
-      return;
-    }
-    if (authMode === 'signup') {
-      const newUser = { ...userProfile, name: fullName };
-      setUserProfile(newUser);
-      localStorage.setItem(`user_${emailOrPhone}`, JSON.stringify({ password, profile: newUser }));
-    }
     setIsAuthenticated(true);
     showToast("🎉 Successfully signed in!");
   };
 
-  const generateAIBio = () => {
-    const randomBio = AI_BIOS[Math.floor(Math.random() * AI_BIOS.length)];
-    setUserProfile(prev => ({ ...prev, bio: randomBio }));
-    showToast("✨ AI generated a new bio for you!");
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && activeMatch) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        sendMsgObj({ image: reader.result, fileName: file.name });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const generateAIIcebreaker = () => {
-    const randomIce = AI_ICEBREAKERS[Math.floor(Math.random() * AI_ICEBREAKERS.length)];
-    setInputText(randomIce);
-    showToast("🤖 AI suggested an icebreaker!");
-  };
-
-  // Voice Note Recording with Waveform
   const startRecording = async () => {
     audioChunksRef.current = [];
     try {
@@ -282,22 +226,16 @@ export default function App() {
     setIsRecording(false);
   };
 
-  useEffect(() => {
-    let interval;
-    if (isRecording) interval = setInterval(() => setRecordTime(p => p + 1), 1000);
-    return () => clearInterval(interval);
-  }, [isRecording]);
-
   const sendMsgObj = (msgData) => {
     if (!activeMatch) return;
     const matchId = activeMatch.id;
-    const newMsg = { id: Date.now(), sender: 'me', readTime: 'Read just now', reaction: null, ...msgData };
+    const newMsg = { id: Date.now(), sender: 'me', readTime: 'Just now', reaction: null, ...msgData };
     setMessages(prev => ({ ...prev, [matchId]: [...(prev[matchId] || []), newMsg] }));
 
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
-      const replyMsg = { id: Date.now() + 1, sender: 'match', readTime: 'Read just now', reaction: null, text: "Totally agree! Let's chat more 😊" };
+      const replyMsg = { id: Date.now() + 1, sender: 'match', readTime: 'Just now', reaction: null, text: "Received! Let's chat more 😊" };
       setMessages(prev => ({ ...prev, [matchId]: [...(prev[matchId] || []), replyMsg] }));
     }, 1500);
   };
@@ -307,11 +245,6 @@ export default function App() {
     if (!text.trim()) return;
     sendMsgObj({ text });
     setInputText('');
-  };
-
-  const sendGif = (url) => {
-    sendMsgObj({ image: url });
-    setShowGifPicker(false);
   };
 
   const handleMessageReaction = (msgId, emoji) => {
@@ -325,7 +258,7 @@ export default function App() {
 
   const handleSwipe = useCallback((direction) => {
     if (swipesLeft <= 0) {
-      showToast(`⚠️ Daily limit reached! Resets in ${formatCountdown(resetTimer)}`);
+      showToast("⚠️ Daily limit reached!");
       return;
     }
     if (currentIndex >= filteredProfiles.length) return;
@@ -351,7 +284,7 @@ export default function App() {
     }
     setCurrentIndex(prev => prev + 1);
     setCurrentPhotoIndex(0);
-  }, [currentIndex, filteredProfiles, currentPhotoIndex, swipesLeft, resetTimer]);
+  }, [currentIndex, filteredProfiles, currentPhotoIndex, swipesLeft]);
 
   const isDark = theme === 'dark';
   const colors = {
@@ -373,7 +306,7 @@ export default function App() {
         @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(-20px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
         @keyframes popBadge { 0% { transform: scale(0.5) rotate(-15deg); opacity: 0; } 50% { transform: scale(1.1) rotate(-15deg); opacity: 1; } 100% { transform: scale(1) rotate(-15deg); opacity: 0; } }
         @keyframes pulseDot { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
-        @keyframes waveAnim { 0% { height: 4px; } 50% { height: 20px; } 100% { height: 4px; } }
+        @keyframes waveAnim { 0% { height: 4px; } 50% { height: 18px; } 100% { height: 4px; } }
       `}</style>
       
       {toastMessage && (
@@ -386,16 +319,16 @@ export default function App() {
         
         {!isAuthenticated ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 24px', backgroundColor: colors.cardBg, textAlign: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '30px' }}>
               <span style={{ fontSize: '48px', marginBottom: '8px' }}>🔥</span>
               <h1 style={{ fontSize: '28px', fontWeight: '900', color: colors.accent, margin: '0 0 6px 0' }}>tinder</h1>
-              <p style={{ fontSize: '13px', color: colors.subText, margin: 0 }}>Ultimate Dating Ecosystem</p>
+              <p style={{ fontSize: '13px', color: colors.subText, margin: 0 }}>Pro Professional Dating Experience</p>
             </div>
 
             {authMode === 'welcome' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-                <button onClick={() => setAuthMode('signup')} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>📝 Create Account (Sign Up)</button>
-                <button onClick={() => setAuthMode('signin')} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '15px' }}>🔐 Sign In (Log In)</button>
+                <button onClick={() => setAuthMode('signup')} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>Create Account (Sign Up)</button>
+                <button onClick={() => setAuthMode('signin')} style={{ width: '100%', padding: '14px', borderRadius: '30px', backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '15px' }}>Sign In (Log In)</button>
               </div>
             )}
 
@@ -424,27 +357,27 @@ export default function App() {
                 <button onClick={() => setAuthMode('welcome')} style={{ background: 'none', border: 'none', color: colors.subText, fontSize: '12px', cursor: 'pointer', textAlign: 'center' }}>← Back</button>
               </div>
             )}
-            <div style={{ fontSize: '11px', color: colors.subText }}>Fully Loaded Ecosystem</div>
+            <div style={{ fontSize: '11px', color: colors.subText }}>Secure Pro Session</div>
           </div>
         ) : (
           <>
-            {/* Header Navigation */}
+            {/* Header Navigation with Pro Icons */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.headerBg }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '22px' }}>🔥</span>
                 <span style={{ fontSize: '20px', fontWeight: '800', color: colors.accent }}>tinder</span>
               </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 {currentTab === 'swipe' && (
                   <>
-                    <button onClick={() => setIsBlindDateMode(!isBlindDateMode)} style={{ background: isBlindDateMode ? colors.accent : colors.pillBg, border: 'none', padding: '4px 6px', borderRadius: '10px', fontSize: '10px', color: isBlindDateMode ? '#fff' : colors.text, cursor: 'pointer' }}>🕶️ Blind</button>
-                    <button onClick={() => setShowPassportModal(true)} style={{ background: 'none', border: `1px solid ${colors.border}`, padding: '4px 6px', borderRadius: '10px', fontSize: '10px', color: colors.text, cursor: 'pointer' }}>📍 {currentCity.name.split(',')[0]}</button>
+                    <button onClick={() => setIsBlindDateMode(!isBlindDateMode)} style={{ background: isBlindDateMode ? colors.accent : colors.pillBg, border: 'none', padding: '4px 8px', borderRadius: '10px', fontSize: '10px', color: isBlindDateMode ? '#fff' : colors.text, cursor: 'pointer', fontWeight: 'bold' }}>🕶️ Blind</button>
+                    <button onClick={() => setShowPassportModal(true)} style={{ background: 'none', border: `1px solid ${colors.border}`, padding: '4px 8px', borderRadius: '10px', fontSize: '10px', color: colors.text, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}><Icons.Location /> {currentCity.name.split(',')[0]}</button>
                   </>
                 )}
-                <button onClick={() => setCurrentTab('swipe')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', opacity: currentTab === 'swipe' ? 1 : 0.4 }}>✨</button>
-                <button onClick={() => setCurrentTab('likes')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', opacity: currentTab === 'likes' ? 1 : 0.4 }}>💛</button>
-                <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', opacity: currentTab === 'matches' ? 1 : 0.4 }}>💬</button>
-                <button onClick={() => setCurrentTab('profile')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', opacity: currentTab === 'profile' ? 1 : 0.4 }}>👤</button>
+                <button onClick={() => setCurrentTab('swipe')} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: currentTab === 'swipe' ? 1 : 0.4, color: colors.text }}><Icons.Sparkle /></button>
+                <button onClick={() => setCurrentTab('likes')} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: currentTab === 'likes' ? 1 : 0.4, color: colors.text }}><Icons.Star /></button>
+                <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: currentTab === 'matches' ? 1 : 0.4, color: colors.text }}><Icons.Message /></button>
+                <button onClick={() => setCurrentTab('profile')} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: currentTab === 'profile' ? 1 : 0.4, color: colors.text }}><Icons.User /></button>
               </div>
             </div>
 
@@ -455,23 +388,6 @@ export default function App() {
               {currentTab === 'swipe' && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '12px' }}>
                   
-                  {/* Smart Filters (Zodiac & Intent) */}
-                  <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
-                    <select value={zodiacFilter} onChange={(e) => setZodiacFilter(e.target.value)} style={{ backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '4px 8px', fontSize: '10px', outline: 'none' }}>
-                      <option value="All">Zodiac: All</option>
-                      <option value="Scorpio">Scorpio ♏</option>
-                      <option value="Leo">Leo ♌</option>
-                      <option value="Aries">Aries ♈</option>
-                    </select>
-                    <select value={intentFilter} onChange={(e) => setIntentFilter(e.target.value)} style={{ backgroundColor: colors.pillBg, color: colors.text, border: `1px solid ${colors.border}`, borderRadius: '10px', padding: '4px 8px', fontSize: '10px', outline: 'none' }}>
-                      <option value="All">Intent: All</option>
-                      <option value="Long-term">Long-term 💍</option>
-                      <option value="Casual">Casual 🥂</option>
-                      <option value="friends">Friends 👋</option>
-                    </select>
-                    <span style={{ fontSize: '10px', color: colors.subText, whiteSpace: 'nowrap', marginLeft: 'auto' }}>⚡ {swipesLeft} left ({formatCountdown(resetTimer)})</span>
-                  </div>
-
                   {/* Stories Tray */}
                   <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
                     {INITIAL_PROFILES.map(p => (
@@ -486,14 +402,13 @@ export default function App() {
 
                   {currentIndex < filteredProfiles.length ? (
                     <>
-                      <div style={{ width: '100%', height: '330px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                      <div style={{ width: '100%', height: '350px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                         {swipeBadge === 'LIKE' && <div style={{ position: 'absolute', top: '30px', left: '20px', border: '4px solid #22c55e', color: '#22c55e', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>LIKE</div>}
-                        {swipeBadge === 'NOPE' && <div style={{ position: 'absolute', top: '30px', right: '20px', border: '4px solid #ef4444', color: '#ef4444', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: '100', animation: 'popBadge 0.5s ease forwards' }}>NOPE</div>}
+                        {swipeBadge === 'NOPE' && <div style={{ position: 'absolute', top: '30px', right: '20px', border: '4px solid #ef4444', color: '#ef4444', padding: '4px 16px', borderRadius: '12px', fontSize: '28px', fontWeight: '900', zIndex: 100, animation: 'popBadge 0.5s ease forwards' }}>NOPE</div>}
 
-                        <div style={{ position: 'relative', width: '100%', height: '180px', filter: isBlindDateMode ? 'blur(16px)' : 'none', transition: 'filter 0.3s' }}>
+                        <div style={{ position: 'relative', width: '100%', height: '190px', filter: isBlindDateMode ? 'blur(16px)' : 'none', transition: 'filter 0.3s' }}>
                           <img src={filteredProfiles[currentIndex].images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           {isBlindDateMode && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', background: 'rgba(0,0,0,0.4)', fontSize: '13px' }}>🔒 Blind Date Active</div>}
-                          <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '10px', fontSize: '11px', color: '#34d399', fontWeight: 'bold' }}>⚡ {filteredProfiles[currentIndex].matchScore} Match</div>
                         </div>
 
                         <div style={{ padding: '10px 12px', backgroundColor: colors.cardBg }}>
@@ -516,15 +431,15 @@ export default function App() {
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
-                        <button onClick={() => handleSwipe('left')} style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', fontSize: '18px' }}>❌</button>
-                        <button onClick={() => handleSwipe('right')} style={{ width: '54px', height: '54px', borderRadius: '50%', backgroundColor: colors.accent, border: 'none', cursor: 'pointer', fontSize: '22px', boxShadow: '0 6px 20px rgba(0,0,0,0.3)' }}>❤️</button>
+                        <button onClick={() => handleSwipe('left')} style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}><Icons.XMark /></button>
+                        <button onClick={() => handleSwipe('right')} style={{ width: '54px', height: '54px', borderRadius: '50%', backgroundColor: colors.accent, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 6px 20px rgba(0,0,0,0.3)' }}><Icons.Heart /></button>
                       </div>
                     </>
                   ) : (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px' }}>
                       <span style={{ fontSize: '44px', marginBottom: '8px' }}>🎉</span>
-                      <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>No more profiles match filters!</h3>
-                      <button onClick={() => { setZodiacFilter('All'); setIntentFilter('All'); setCurrentIndex(0); }} style={{ marginTop: '16px', padding: '10px 20px', borderRadius: '20px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Filters</button>
+                      <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>No more profiles!</h3>
+                      <button onClick={() => setCurrentIndex(0)} style={{ marginTop: '16px', padding: '10px 20px', borderRadius: '20px', backgroundColor: colors.accent, color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
                     </div>
                   )}
                 </div>
@@ -575,8 +490,8 @@ export default function App() {
                       <h4 style={{ fontSize: '13px', margin: 0 }}>{activeMatch.name}</h4>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <button onClick={() => setActiveVideoCall(true)} style={{ background: 'none', border: 'none', color: '#34d399', fontSize: '16px', cursor: 'pointer' }}>📹</button>
-                      <button onClick={() => setShowReportModal(true)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '14px', cursor: 'pointer' }}>⚠️</button>
+                      <button onClick={() => setActiveVideoCall(true)} style={{ background: 'none', border: 'none', color: '#34d399', cursor: 'pointer' }} title="Video Call"><Icons.Video /></button>
+                      <button onClick={() => setShowReportModal(true)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '14px' }}>⚠️</button>
                     </div>
                   </div>
 
@@ -585,7 +500,10 @@ export default function App() {
                       <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'me' ? 'flex-end' : 'flex-start' }}>
                         <div style={{ padding: '8px 12px', borderRadius: '14px', maxWidth: '80%', fontSize: '12px', backgroundColor: msg.sender === 'me' ? colors.accent : colors.pillBg, color: '#fff', position: 'relative' }}>
                           {msg.image ? (
-                            <img src={msg.image} alt="" style={{ width: '150px', borderRadius: '8px' }} />
+                            <div>
+                              <img src={msg.image} alt="" style={{ width: '150px', borderRadius: '8px', display: 'block', marginBottom: msg.fileName ? '4px' : 0 }} />
+                              {msg.fileName && <span style={{ fontSize: '9px', opacity: 0.8 }}>📎 {msg.fileName}</span>}
+                            </div>
                           ) : msg.isVoice ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '120px' }}>
                               <span>▶️</span>
@@ -623,13 +541,11 @@ export default function App() {
 
                   {showGifPicker && (
                     <div style={{ padding: '8px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '6px', overflowX: 'auto' }}>
-                      {GIF_LIST.map((g, i) => <img key={i} src={g} alt="" onClick={() => sendGif(g)} style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }} />)}
+                      {["https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif", "https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif"].map((g, i) => (
+                        <img key={i} src={g} alt="" onClick={() => sendGif(g)} style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }} />
+                      ))}
                     </div>
                   )}
-
-                  <div style={{ padding: '8px 12px', backgroundColor: colors.cardBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '6px', overflowX: 'auto' }}>
-                    <button onClick={generateAIIcebreaker} style={{ whiteSpace: 'nowrap', background: colors.pillBg, border: `1px solid ${colors.border}`, color: colors.text, padding: '4px 10px', borderRadius: '14px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>✨ AI Icebreaker</button>
-                  </div>
 
                   <div style={{ padding: '10px', backgroundColor: colors.headerBg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: '8px', alignItems: 'center' }}>
                     {isRecording ? (
@@ -639,9 +555,12 @@ export default function App() {
                       </div>
                     ) : (
                       <>
-                        <button onClick={() => setShowGifPicker(!showGifPicker)} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }}>🎨</button>
+                        <label htmlFor="file-upload" style={{ cursor: 'pointer', color: colors.subText }} title="Attach Picture or File">
+                          <Icons.Attachment />
+                        </label>
+                        <input id="file-upload" type="file" onChange={handleFileUpload} style={{ display: 'none' }} />
                         <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)} style={{ flex: 1, backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '18px', padding: '8px 14px', fontSize: '12px', color: colors.text, outline: 'none' }} />
-                        <button onClick={startRecording} style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }} title="Record Voice">🎙️</button>
+                        <button onClick={startRecording} style={{ background: 'none', border: 'none', color: colors.subText, cursor: 'pointer' }} title="Voice Note"><Icons.Mic /></button>
                         <button onClick={() => sendMessage(inputText)} style={{ background: colors.accent, color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '18px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Send</button>
                       </>
                     )}
@@ -658,7 +577,6 @@ export default function App() {
                   <p style={{ fontSize: '12px', color: colors.subText, margin: '0 0 12px 0' }}>{userProfile.location}</p>
 
                   <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    
                     <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '12px 14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '13px', fontWeight: 'bold' }}>App Theme</span>
                       <button onClick={() => setTheme(isDark ? 'light' : 'dark')} style={{ padding: '6px 12px', borderRadius: '14px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', color: colors.text }}>
@@ -666,26 +584,11 @@ export default function App() {
                       </button>
                     </div>
 
-                    <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '12px 14px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 'bold' }}>Accent Palette</span>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        {[
-                          { name: 'Tinder', color: '#f43f5e' },
-                          { name: 'Bumble', color: '#eab308' },
-                          { name: 'Hinge', color: '#8b5cf6' }
-                        ].map(acc => (
-                          <button key={acc.name} onClick={() => setAccentColor(acc.color)} style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: acc.color, border: accentColor === acc.color ? '2px solid #fff' : 'none', cursor: 'pointer' }} />
-                        ))}
-                      </div>
-                    </div>
-
                     {!userProfile.verified ? (
-                      <button onClick={() => setShowVerificationModal(true)} style={{ width: '100%', padding: '12px', borderRadius: '20px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>✓ Verify Profile (Live Selfie Pose)</button>
+                      <button onClick={() => setShowVerificationModal(true)} style={{ width: '100%', padding: '12px', borderRadius: '20px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>✓ Verify Profile (Blue Tick)</button>
                     ) : (
                       <div style={{ padding: '10px', backgroundColor: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: '12px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold' }}>✓ Verified Profile Active</div>
                     )}
-
-                    <button onClick={generateAIBio} style={{ width: '100%', padding: '12px', borderRadius: '20px', background: 'linear-gradient(135deg, #a855f7, #6366f1)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>✨ Generate AI Bio</button>
 
                     <button onClick={() => { setIsAuthenticated(false); showToast("Logged out successfully"); }} style={{ width: '100%', padding: '12px', borderRadius: '20px', backgroundColor: colors.pillBg, color: '#ef4444', border: `1px solid ${colors.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🚪 Log Out</button>
                   </div>
@@ -747,7 +650,7 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
               <button onClick={() => setArFilter(arFilter === 'sunglasses' ? 'none' : 'sunglasses')} style={{ padding: '8px 12px', borderRadius: '14px', backgroundColor: arFilter === 'sunglasses' ? colors.accent : '#27272a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '12px' }}>🕶️ Glasses</button>
               <button onClick={() => setArFilter(arFilter === 'hearts' ? 'none' : 'hearts')} style={{ padding: '8px 12px', borderRadius: '14px', backgroundColor: arFilter === 'hearts' ? colors.accent : '#27272a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '12px' }}>💖 Hearts</button>
-              <button onClick={() => setActiveVideoCall(false)} style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', fontSize: '18px', cursor: 'pointer' }}>📞</button>
+              <button onClick={() => setActiveVideoCall(false)} style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Icons.Phone /></button>
             </div>
           </div>
         )}
