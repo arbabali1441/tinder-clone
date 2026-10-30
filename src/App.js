@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const INITIAL_PROFILES = [
   { id: 1, name: 'Jessica', age: 25, distance: 3, bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
@@ -12,6 +12,13 @@ const ICEBREAKERS = [
   "If you could travel anywhere right now, where are we going? ✈️",
   "What is your go-to weekend adventure? 🌄",
   "Pineapple on pizza: absolute crime or underrated genius? 🍕"
+];
+
+const AUTO_REPLIES = [
+  "That sounds super interesting! Tell me more 😊",
+  "Haha totally agree with you on that! 🙌",
+  "Oh nice! I would love to check that out sometime.",
+  "You have got great taste! What else do you enjoy doing? ✨"
 ];
 
 export default function App() {
@@ -32,11 +39,12 @@ export default function App() {
   
   const filteredProfiles = INITIAL_PROFILES.filter(p => p.distance <= maxDistance);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [history, setHistory] = useState([]); // For Rewind feature
+  const [history, setHistory] = useState([]);
   const [matches, setMatches] = useState([]);
   const [activeMatch, setActiveMatch] = useState(null);
   const [messages, setMessages] = useState({});
   const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState(null);
 
@@ -63,8 +71,18 @@ export default function App() {
     if (!inputText.trim() || !activeMatch) return;
     const matchId = activeMatch.id;
     const newMsg = { sender: 'me', text: inputText };
+    
     setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), newMsg] }));
     setInputText('');
+
+    // Simulate Match typing and reply
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      const randomReply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)];
+      const replyMsg = { sender: 'match', text: randomReply };
+      setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), replyMsg] }));
+    }, 2000);
   };
 
   const generateAIIcebreaker = () => {
@@ -166,7 +184,10 @@ export default function App() {
               <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', backgroundColor: '#18181b', borderBottom: '1px solid #27272a' }}>
                 <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', color: '#f43f5e', fontWeight: 'bold', cursor: 'pointer', marginRight: '12px', fontSize: '14px' }}>← Back</button>
                 <img src={activeMatch.image} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', marginRight: '10px' }} />
-                <h4 style={{ fontSize: '15px', fontWeight: 'bold', margin: 0 }}>{activeMatch.name}</h4>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: 'bold', margin: 0 }}>{activeMatch.name}</h4>
+                  <span style={{ fontSize: '11px', color: '#34d399' }}>● Online</span>
+                </div>
               </div>
               <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ backgroundColor: '#27272a', padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', color: '#d4d4d8' }}>You matched with {activeMatch.name}! Say something nice. ✨</div>
@@ -175,6 +196,11 @@ export default function App() {
                     <div style={{ padding: '10px 14px', borderRadius: '16px', maxWidth: '80%', fontSize: '13px', backgroundColor: msg.sender === 'me' ? '#f43f5e' : '#27272a', color: '#fff' }}>{msg.text}</div>
                   </div>
                 ))}
+                {isTyping && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{ padding: '8px 12px', borderRadius: '16px', backgroundColor: '#27272a', color: '#a1a1aa', fontSize: '12px', fontStyle: 'italic' }}>{activeMatch.name} is typing...</div>
+                  </div>
+                )}
               </div>
               
               <div style={{ padding: '8px 16px', backgroundColor: '#121214', borderTop: '1px solid #27272a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
