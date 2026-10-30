@@ -17,6 +17,15 @@
 
 ---
 
+## 🎬 Video Demo & Walkthrough
+
+Click the image below to watch the full project demo on YouTube:
+
+[<img src="https://img.youtube.com/vi/RYKhQ9-3HS0/maxresdefault.jpg" alt="Building Tinder PRO: Next-Gen Dating App Clone in React" width="100%" style="border-radius: 8px;">](https://youtu.be/RYKhQ9-3HS0 "Watch Tinder PRO Video Demo")
+
+* **Title:** 🔥 Building Tinder PRO: Next-Gen Dating App Clone in React (Tinder + Bumble + Hinge)
+* **Watch on YouTube:** [https://youtu.be/RYKhQ9-3HS0](https://youtu.be/RYKhQ9-3HS0)
+
 ## 🗺️ App Map & Navigation Architecture
 
 [ Welcome / Auth Flow ]
