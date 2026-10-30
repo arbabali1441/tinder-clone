@@ -7,7 +7,7 @@ const INITIAL_PROFILES = [
     age: 25, 
     distance: 3, 
     bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', 
-    interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️', 'Photography 📸'], 
+    interests: ['Coffee ☕', 'Art 🎨', 'Travel ✈️', 'Photography 📸', 'Desserts 🍰'], 
     images: [
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
@@ -20,7 +20,7 @@ const INITIAL_PROFILES = [
     age: 27, 
     distance: 8, 
     bio: 'Software developer by day, guitarist by night 🎸. Always down for live music or a food adventure.', 
-    interests: ['Coding 💻', 'Guitar 🎸', 'Live Music 🎶', 'Burgers 🍔'], 
+    interests: ['Coding 💻', 'Guitar 🎸', 'Live Music 🎶', 'Burgers 🍔', 'Tech 🚀'], 
     images: [
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80'
@@ -32,7 +32,7 @@ const INITIAL_PROFILES = [
     age: 24, 
     distance: 2, 
     bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', 
-    interests: ['Hiking 🥾', 'Fitness 💪', 'Sunsets 🌅', 'Yoga 🧘‍♀️'], 
+    interests: ['Hiking 🥾', 'Fitness 💪', 'Sunsets 🌅', 'Yoga 🧘‍♀️', 'Nature 🌲'], 
     images: [
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80'
@@ -44,7 +44,7 @@ const INITIAL_PROFILES = [
     age: 29, 
     distance: 12, 
     bio: 'Architect and photography enthusiast 📸. Let us grab a drink and talk about city designs.', 
-    interests: ['Architecture 🏛️', 'Design ✨', 'Wine 🍷', 'Running 🏃‍♂️'], 
+    interests: ['Architecture 🏛️', 'Design ✨', 'Wine 🍷', 'Running 🏃‍♂️', 'Art 🎨'], 
     images: [
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=800&q=80'
@@ -73,6 +73,7 @@ export default function App() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState(false);
+  const [showFullProfileModal, setShowFullProfileModal] = useState(false);
 
   // Dynamic Theme Palette
   const isDark = theme === 'dark';
@@ -214,7 +215,7 @@ export default function App() {
                 <>
                   <div style={{ width: '100%', height: '440px', borderRadius: '20px', overflowY: 'auto', position: 'relative', backgroundColor: colors.pillBg, boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
                     
-                    <div style={{ position: 'relative', width: '100%', height: '280px' }}>
+                    <div style={{ position: 'relative', width: '100%', height: '280px', cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
                       <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       
                       <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', gap: '4px', zIndex: 10 }}>
@@ -231,7 +232,7 @@ export default function App() {
                       )}
                     </div>
 
-                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', backgroundColor: colors.cardBg }}>
+                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', backgroundColor: colors.cardBg, cursor: 'pointer' }} onClick={() => setShowFullProfileModal(true)}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                         <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: colors.text }}>{filteredProfiles[currentIndex].name},</h2>
                         <span style={{ fontSize: '18px', fontWeight: '300', color: colors.subText }}>{filteredProfiles[currentIndex].age}</span>
@@ -304,7 +305,6 @@ export default function App() {
                 <button onClick={() => setShowChatMenu(!showChatMenu)} style={{ background: 'none', border: 'none', color: colors.text, fontSize: '20px', cursor: 'pointer', padding: '4px' }}>⋮</button>
               </div>
 
-              {/* Chat Dropdown Menu */}
               {showChatMenu && (
                 <div style={{ position: 'absolute', right: '16px', top: '60px', backgroundColor: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', zIndex: 50, width: '160px', overflow: 'hidden' }}>
                   <button onClick={clearChat} style={{ width: '100%', padding: '12px 16px', background: 'none', border: 'none', color: colors.text, fontSize: '13px', textAlign: 'left', cursor: 'pointer', borderBottom: `1px solid ${colors.border}` }}>🧹 Clear Chat</button>
@@ -364,6 +364,37 @@ export default function App() {
           )}
 
         </div>
+
+        {/* FULL PROFILE MODAL (Expanded Bio) */}
+        {showFullProfileModal && currentIndex < filteredProfiles.length && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: colors.cardBg, zIndex: 120, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <div style={{ position: 'relative', width: '100%', height: '360px' }}>
+              <img src={filteredProfiles[currentIndex].images[currentPhotoIndex]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <button onClick={() => setShowFullProfileModal(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: '36px', height: '36px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <h2 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0, color: colors.text }}>{filteredProfiles[currentIndex].name},</h2>
+                <span style={{ fontSize: '22px', fontWeight: '300', color: colors.subText }}>{filteredProfiles[currentIndex].age}</span>
+              </div>
+              <p style={{ fontSize: '14px', color: colors.subText, margin: 0 }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
+              <hr style={{ borderColor: colors.border, margin: '4px 0' }} />
+              <div>
+                <h4 style={{ fontSize: '14px', color: '#f43f5e', marginBottom: '6px' }}>About Me</h4>
+                <p style={{ fontSize: '14px', color: colors.text, lineHeight: '1.5', margin: 0 }}>{filteredProfiles[currentIndex].bio}</p>
+              </div>
+              <div>
+                <h4 style={{ fontSize: '14px', color: '#f43f5e', marginBottom: '8px' }}>Interests</h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {filteredProfiles[currentIndex].interests.map((tag, i) => (
+                    <span key={i} style={{ fontSize: '12px', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, padding: '6px 12px', borderRadius: '20px', color: colors.text }}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+              <button onClick={() => setShowFullProfileModal(false)} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', marginTop: '16px' }}>Back to Swiping</button>
+            </div>
+          </div>
+        )}
 
         {/* EDIT PROFILE MODAL */}
         {showEditProfileModal && (
