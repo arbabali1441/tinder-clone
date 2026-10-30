@@ -92,10 +92,12 @@ export default function App() {
     name: 'Alex',
     age: 25,
     location: 'New York, USA 🇺🇸',
+    bio: 'Exploring new places, tech enthusiast, and coffee lover ☕',
     image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80'
   });
   const [tempName, setTempName] = useState(userProfile.name);
   const [tempAge, setTempAge] = useState(userProfile.age);
+  const [tempBio, setTempBio] = useState(userProfile.bio);
   
   const filteredProfiles = INITIAL_PROFILES.filter(p => p.distance <= maxDistance);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -195,8 +197,9 @@ export default function App() {
   };
 
   const saveProfile = () => {
-    setUserProfile(prev => ({ ...prev, name: tempName, age: Number(tempAge) }));
+    setUserProfile(prev => ({ ...prev, name: tempName, age: Number(tempAge), bio: tempBio }));
     setShowEditProfileModal(false);
+    showToast("✅ Profile updated successfully!");
   };
 
   return (
@@ -214,7 +217,7 @@ export default function App() {
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div style={{ position: 'absolute', top: '24px', zIndex: 200, backgroundColor: '#3b82f6', color: '#fff', padding: '10px 20px', borderRadius: '30px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', animation: 'fadeInOut 2.5s ease forwards' }}>
+        <div style={{ position: 'absolute', top: '24px', zIndex: 200, backgroundColor: '#f43f5e', color: '#fff', padding: '10px 20px', borderRadius: '30px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', animation: 'fadeInOut 2.5s ease forwards' }}>
           {toastMessage}
         </div>
       )}
@@ -378,9 +381,10 @@ export default function App() {
                 <img src={userProfile.image} alt="User Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
               </div>
               <h2 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 4px 0', color: colors.text }}>{userProfile.name}, {userProfile.age}</h2>
-              <p style={{ fontSize: '13px', color: colors.subText, margin: '0 0 16px 0' }}>{userProfile.location}</p>
+              <p style={{ fontSize: '13px', color: colors.subText, margin: '0 0 8px 0' }}>{userProfile.location}</p>
+              <p style={{ fontSize: '12px', color: colors.text, textAlign: 'center', padding: '0 16px', margin: '0 0 16px 0', fontStyle: 'italic' }}>"{userProfile.bio}"</p>
               
-              <button onClick={() => { setTempName(userProfile.name); setTempAge(userProfile.age); setShowEditProfileModal(true); }} style={{ padding: '8px 20px', borderRadius: '20px', backgroundColor: colors.pillBg, color: '#f43f5e', border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '13px', marginBottom: '24px' }}>Edit Profile</button>
+              <button onClick={() => { setTempName(userProfile.name); setTempAge(userProfile.age); setTempBio(userProfile.bio); setShowEditProfileModal(true); }} style={{ padding: '8px 20px', borderRadius: '20px', backgroundColor: colors.pillBg, color: '#f43f5e', border: `1px solid ${colors.border}`, fontWeight: '600', cursor: 'pointer', fontSize: '13px', marginBottom: '24px' }}>Edit Profile</button>
 
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ backgroundColor: colors.headerBg, border: `1px solid ${colors.border}`, padding: '14px 16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -444,6 +448,13 @@ export default function App() {
                 <div>
                   <label style={{ fontSize: '12px', color: colors.subText, display: 'block', marginBottom: '6px' }}>Age</label>
                   <input type="number" value={tempAge} onChange={(e) => setTempAge(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text, fontSize: '14px', outline: 'none' }} />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', color: colors.subText }}>Bio</label>
+                    <span style={{ fontSize: '11px', color: tempBio.length > 150 ? '#f43f5e' : colors.subText }}>{tempBio.length}/150</span>
+                  </div>
+                  <textarea rows="3" maxLength="150" value={tempBio} onChange={(e) => setTempBio(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text, fontSize: '14px', outline: 'none', resize: 'none' }} />
                 </div>
               </div>
               <button onClick={saveProfile} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>Save Changes</button>
