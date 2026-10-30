@@ -74,6 +74,7 @@ export default function App() {
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState(false);
   const [showFullProfileModal, setShowFullProfileModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Dynamic Theme Palette
   const isDark = theme === 'dark';
@@ -108,15 +109,28 @@ export default function App() {
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState(null);
 
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+  };
+
   const handleSwipe = (direction) => {
     const profile = filteredProfiles[currentIndex];
     setHistory(prev => [...prev, { index: currentIndex, photoIndex: currentPhotoIndex, profile }]);
     
-    if (direction === 'right' || direction === 'super') {
+    if (direction === 'super') {
+      showToast(`⭐ You sent a Super Like to ${profile.name}!`);
+      setMatches((prev) => [...prev, profile]);
+      setMatchedProfile(profile);
+      setShowMatchModal(true);
+    } else if (direction === 'right') {
       setMatches((prev) => [...prev, profile]);
       setMatchedProfile(profile);
       setShowMatchModal(true);
     }
+    
     setCurrentIndex((prev) => prev + 1);
     setCurrentPhotoIndex(0);
   };
@@ -188,15 +202,23 @@ export default function App() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: colors.bg, fontFamily: 'system-ui, sans-serif', color: colors.text, margin: 0, transition: 'all 0.3s ease' }}>
       <style>{`
-        /* Hide scrollbars globally across modern browsers */
-        ::-webkit-scrollbar {
-          display: none;
-        }
-        * {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateY(-20px); }
+          15% { opacity: 1; transform: translateY(0); }
+          85% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-20px); }
         }
       `}</style>
+      
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div style={{ position: 'absolute', top: '24px', zIndex: 200, backgroundColor: '#3b82f6', color: '#fff', padding: '10px 20px', borderRadius: '30px', fontSize: '13px', fontWeight: 'bold', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', animation: 'fadeInOut 2.5s ease forwards' }}>
+          {toastMessage}
+        </div>
+      )}
+
       <div style={{ width: '100%', maxWidth: '420px', height: '100%', maxHeight: '850px', backgroundColor: colors.cardBg, borderRadius: '24px', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', border: `1px solid ${colors.border}`, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)' }}>
         
         {/* Header */}
