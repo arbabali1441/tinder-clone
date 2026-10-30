@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 
-const PROFILES = [
-  { id: 1, name: 'Jessica', age: 25, distance: '3 km away', bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
-  { id: 2, name: 'Michael', age: 27, distance: '5 km away', bio: 'Software developer by day, guitarist by night 🎸. Always down for live music or a food adventure.', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80' },
-  { id: 3, name: 'Sophia', age: 24, distance: '2 km away', bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80' },
+const INITIAL_PROFILES = [
+  { id: 1, name: 'Jessica', age: 25, distance: 3, bio: 'Coffee addict ☕, art lover, and weekend traveler. Let us find the best dessert spot in town!', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80' },
+  { id: 2, name: 'Michael', age: 27, distance: 8, bio: 'Software developer by day, guitarist by night 🎸. Always down for live music or a food adventure.', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80' },
+  { id: 3, name: 'Sophia', age: 24, distance: 2, bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80' },
+  { id: 4, name: 'David', age: 29, distance: 12, bio: 'Architect and photography enthusiast 📸. Let us grab a drink and talk about city designs.', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80' }
 ];
 
 const ICEBREAKERS = [
@@ -15,6 +16,10 @@ const ICEBREAKERS = [
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState('swipe');
+  const [maxDistance, setMaxDistance] = useState(10);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  
+  const filteredProfiles = INITIAL_PROFILES.filter(p => p.distance <= maxDistance);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [matches, setMatches] = useState([]);
   const [activeMatch, setActiveMatch] = useState(null);
@@ -24,7 +29,7 @@ export default function App() {
   const [matchedProfile, setMatchedProfile] = useState(null);
 
   const handleSwipe = (direction) => {
-    const profile = PROFILES[currentIndex];
+    const profile = filteredProfiles[currentIndex];
     if (direction === 'right') {
       setMatches((prev) => [...prev, profile]);
       setMatchedProfile(profile);
@@ -56,7 +61,10 @@ export default function App() {
             <span style={{ fontSize: '24px' }}>🔥</span>
             <span style={{ fontSize: '22px', fontWeight: '800', background: 'linear-gradient(to right, #f43f5e, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '0.5px' }}>tinder</span>
           </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            {currentTab === 'swipe' && (
+              <button onClick={() => setShowFilterModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} title="Filter Distance">⚙️</button>
+            )}
             <button onClick={() => setCurrentTab('swipe')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', opacity: currentTab === 'swipe' ? 1 : 0.4 }}>✨</button>
             <button onClick={() => setCurrentTab('matches')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', opacity: currentTab === 'matches' ? 1 : 0.4 }}>💬</button>
             <button onClick={() => setCurrentTab('profile')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', opacity: currentTab === 'profile' ? 1 : 0.4 }}>👤</button>
@@ -69,17 +77,17 @@ export default function App() {
           {/* SWIPE TAB */}
           {currentTab === 'swipe' && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
-              {currentIndex < PROFILES.length ? (
+              {currentIndex < filteredProfiles.length ? (
                 <>
                   <div style={{ width: '100%', height: '500px', borderRadius: '20px', overflow: 'hidden', position: 'relative', backgroundColor: '#27272a', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-                    <img src={PROFILES[currentIndex].image} alt={PROFILES[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={filteredProfiles[currentIndex].image} alt={filteredProfiles[currentIndex].name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.2), transparent)', padding: '24px 16px 16px 16px', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <h2 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>{PROFILES[currentIndex].name},</h2>
-                        <span style={{ fontSize: '22px', fontWeight: '300' }}>{PROFILES[currentIndex].age}</span>
+                        <h2 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>{filteredProfiles[currentIndex].name},</h2>
+                        <span style={{ fontSize: '22px', fontWeight: '300' }}>{filteredProfiles[currentIndex].age}</span>
                       </div>
-                      <p style={{ fontSize: '14px', color: '#d4d4d8', margin: '4px 0 8px 0' }}>📍 {PROFILES[currentIndex].distance}</p>
-                      <p style={{ fontSize: '13px', color: '#e4e4e7', background: 'rgba(0,0,0,0.5)', padding: '10px 12px', borderRadius: '12px', margin: 0, backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.1)' }}>{PROFILES[currentIndex].bio}</p>
+                      <p style={{ fontSize: '14px', color: '#d4d4d8', margin: '4px 0 8px 0' }}>📍 {filteredProfiles[currentIndex].distance} km away</p>
+                      <p style={{ fontSize: '13px', color: '#e4e4e7', background: 'rgba(0,0,0,0.5)', padding: '10px 12px', borderRadius: '12px', margin: 0, backdropFilter: 'blur(5px)', border: '1px solid rgba(255,255,255,0.1)' }}>{filteredProfiles[currentIndex].bio}</p>
                     </div>
                   </div>
 
@@ -91,8 +99,8 @@ export default function App() {
               ) : (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '24px' }}>
                   <span style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</span>
-                  <h3 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 8px 0' }}>That is everyone for now!</h3>
-                  <p style={{ fontSize: '14px', color: '#a1a1aa', margin: '0 0 24px 0' }}>Check back later or reset the deck to review profiles again.</p>
+                  <h3 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 8px 0' }}>No more profiles in this range!</h3>
+                  <p style={{ fontSize: '14px', color: '#a1a1aa', margin: '0 0 24px 0' }}>Try increasing your distance filter or reset deck.</p>
                   <button onClick={() => setCurrentIndex(0)} style={{ padding: '12px 24px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Reset Deck</button>
                 </div>
               )}
@@ -140,7 +148,6 @@ export default function App() {
                 ))}
               </div>
               
-              {/* AI Icebreaker Action Bar */}
               <div style={{ padding: '8px 16px', backgroundColor: '#121214', borderTop: '1px solid #27272a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <button onClick={generateAIIcebreaker} style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   ✨ Generate AI Icebreaker
@@ -170,6 +177,26 @@ export default function App() {
           )}
 
         </div>
+
+        {/* DISTANCE FILTER MODAL */}
+        {showFilterModal && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <div style={{ backgroundColor: '#18181b', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px', borderTop: '1px solid #27272a' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>Maximum Distance</h3>
+                <button onClick={() => setShowFilterModal(false)} style={{ background: 'none', border: 'none', color: '#a1a1aa', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+              </div>
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#a1a1aa', marginBottom: '8px' }}>
+                  <span>Up to</span>
+                  <span style={{ fontWeight: 'bold', color: '#f43f5e' }}>{maxDistance} km</span>
+                </div>
+                <input type="range" min="1" max="20" value={maxDistance} onChange={(e) => { setMaxDistance(Number(e.target.value)); setCurrentIndex(0); }} style={{ width: '100%', accentColor: '#f43f5e', cursor: 'pointer' }} />
+              </div>
+              <button onClick={() => setShowFilterModal(false)} style={{ width: '100%', padding: '14px', borderRadius: '30px', background: 'linear-gradient(to right, #f43f5e, #ec4899)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>Apply Filter</button>
+            </div>
+          </div>
+        )}
 
         {/* MATCH MODAL */}
         {showMatchModal && matchedProfile && (
