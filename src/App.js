@@ -87,6 +87,13 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState(null);
   const [swipeBadge, setSwipeBadge] = useState(null);
 
+  // Call States
+  const [activeCall, setActiveCall] = useState(false);
+  const [callStatus, setCallStatus] = useState('Ringing...');
+  const [callTimer, setCallTimer] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isSpeaker, setIsSpeaker] = useState(false);
+
   // Dynamic Theme Palette
   const isDark = theme === 'dark';
   const colors = {
@@ -154,6 +161,41 @@ export default function App() {
     }
   };
 
+  const startCall = () => {
+    setActiveCall(true);
+    setCallStatus('Calling...');
+    setCallTimer(0);
+    setIsMuted(false);
+    setIsSpeaker(false);
+
+    setTimeout(() => {
+      setCallStatus('Connected');
+    }, 2500);
+  };
+
+  const endCall = () => {
+    setCallStatus('Ended');
+    setTimeout(() => {
+      setActiveCall(false);
+    }, 800);
+  };
+
+  useEffect(() => {
+    let interval;
+    if (activeCall && callStatus === 'Connected') {
+      interval = setInterval(() => {
+        setCallTimer(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [activeCall, callStatus]);
+
+  const formatTimer = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
   const handleSwipe = useCallback((direction) => {
     if (currentIndex >= filteredProfiles.length) return;
     const profile = filteredProfiles[currentIndex];
@@ -196,7 +238,7 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (currentTab !== 'swipe' || showEditProfileModal || showFilterModal || showMatchModal || showFullProfileModal) return;
+      if (currentTab !== 'swipe' || showEditProfileModal || showFilterModal || showMatchModal || showFullProfileModal || activeCall) return;
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       if (e.key === 'ArrowLeft') {
@@ -212,7 +254,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTab, showEditProfileModal, showFilterModal, showMatchModal, showFullProfileModal, handleSwipe, handleRewind]);
+  }, [currentTab, showEditProfileModal, showFilterModal, showMatchModal, showFullProfileModal, activeCall, handleSwipe, handleRewind]);
 
   const nextPhoto = (e) => {
     e.stopPropagation();
@@ -286,6 +328,11 @@ export default function App() {
           0% { transform: scale(0.5) rotate(-15deg); opacity: 0; }
           50% { transform: scale(1.1) rotate(-15deg); opacity: 1; }
           100% { transform: scale(1) rotate(-15deg); opacity: 0; }
+        }
+        @keyframes pulseRing {
+          0% { transform: scale(0.95); opacity: 0.8; }
+          50% { transform: scale(1.1); opacity: 0.4; }
+          100% { transform: scale(0.95); opacity: 0.8; }
         }
       `}</style>
       
@@ -443,7 +490,10 @@ export default function App() {
                     <span style={{ fontSize: '11px', color: '#34d399' }}>● Online</span>
                   </div>
                 </div>
-                <button onClick={() => setShowChatMenu(!showChatMenu)} style={{ background: 'none', border: 'none', color: colors.text, fontSize: '20px', cursor: 'pointer', padding: '4px' }}>⋮</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button onClick={startCall} style={{ background: 'none', border: 'none', color: '#34d399', fontSize: '18px', cursor: 'pointer', padding: '4px' }} title="Voice Call">📞</button>
+                  <button onClick={() => setShowChatMenu(!showChatMenu)} style={{ background: 'none', border: 'none', color: colors.text, fontSize: '20px', cursor: 'pointer', padding: '4px' }}>⋮</button>
+                </div>
               </div>
 
               {showChatMenu && (
@@ -507,6 +557,38 @@ export default function App() {
 
         </div>
 
+        {/* VOICE CALL MODAL */}
+        {activeCall && activeMatch && (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: '#09090b', zIndex: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '48px 24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', color: '#a1a1aa', letterSpacing: '1px', textTransform: 'uppercase' }}>Tinder Audio Call</span>
+              <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#fff', margin: 0 }}>{activeMatch.name}</h2>
+              <span style={{ fontSize: '14px', color: callStatus === 'Connected' ? '#34d399' : '#f43f5e', fontWeight: '600' }}>
+                {callStatus === 'Connected' ? formatTimer(callTimer) : callStatus}
+              </span>
+            </div>
+
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', width: '160px', height: '160px', borderRadius: '50%', border: '2px solid rgba(244,63,94,0.3)', animation: 'pulseRing 2s infinite ease-in-out' }}></div>
+              <div style={{ width: '120px', height: '120px', borderRadius: '50%', overflow: 'hidden', border: '4px solid #f43f5e', boxShadow: '0 10px 30px rgba(0,0,0,0.6)' }}>
+                <img src={activeMatch.images[0]} alt={activeMatch.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+              <button onClick={() => setIsMuted(!isMuted)} style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: isMuted ? '#ef4444' : '#27272a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {isMuted ? '🔇' : '🎙️'}
+              </button>
+              <button onClick={endCall} style={{ width: '68px', height: '68px', borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 25px rgba(239,68,68,0.5)' }}>
+                📞
+              </button>
+              <button onClick={() => setIsSpeaker(!isSpeaker)} style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: isSpeaker ? '#3b82f6' : '#27272a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                🔊
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* FULL PROFILE MODAL (Expanded Bio) */}
         {showFullProfileModal && currentIndex < filteredProfiles.length && (
           <div style={{ position: 'absolute', inset: 0, backgroundColor: colors.cardBg, zIndex: 120, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
@@ -560,7 +642,7 @@ export default function App() {
                   <input id="photo-upload" type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', color: colors.subText, display: 'block', marginBottom: '6px' }}>Name</label>
+                  <label style={{ fontSize: '12px', color colors.subText, display: 'block', marginBottom: '6px' }}>Name</label>
                   <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} style={{ width: '100%', backgroundColor: colors.pillBg, border: `1px solid ${colors.border}`, borderRadius: '12px', padding: '12px', color: colors.text, fontSize: '14px', outline: 'none' }} />
                 </div>
                 <div>
