@@ -6,6 +6,13 @@ const PROFILES = [
   { id: 3, name: 'Sophia', age: 24, distance: '2 km away', bio: 'Sunset chaser 🌅 and fitness enthusiast. Looking for someone to explore new hiking trails with.', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80' },
 ];
 
+const ICEBREAKERS = [
+  "Coffee or tea? This is the ultimate test ☕",
+  "If you could travel anywhere right now, where are we going? ✈️",
+  "What is your go-to weekend adventure? 🌄",
+  "Pineapple on pizza: absolute crime or underrated genius? 🍕"
+];
+
 export default function App() {
   const [currentTab, setCurrentTab] = useState('swipe');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -32,6 +39,11 @@ export default function App() {
     const newMsg = { sender: 'me', text: inputText };
     setMessages((prev) => ({ ...prev, [matchId]: [...(prev[matchId] || []), newMsg] }));
     setInputText('');
+  };
+
+  const generateAIIcebreaker = () => {
+    const randomLine = ICEBREAKERS[Math.floor(Math.random() * ICEBREAKERS.length)];
+    setInputText(randomLine);
   };
 
   return (
@@ -127,6 +139,14 @@ export default function App() {
                   </div>
                 ))}
               </div>
+              
+              {/* AI Icebreaker Action Bar */}
+              <div style={{ padding: '8px 16px', backgroundColor: '#121214', borderTop: '1px solid #27272a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button onClick={generateAIIcebreaker} style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ✨ Generate AI Icebreaker
+                </button>
+              </div>
+
               <div style={{ padding: '12px', backgroundColor: '#18181b', borderTop: '1px solid #27272a', display: 'flex', gap: '8px' }}>
                 <input type="text" placeholder="Type a message..." value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} style={{ flex: 1, backgroundColor: '#27272a', border: '1px solid #3f3f46', borderRadius: '20px', padding: '10px 16px', fontSize: '13px', color: '#fff', outline: 'none' }} />
                 <button onClick={sendMessage} style={{ padding: '10px 20px', borderRadius: '20px', backgroundColor: '#f43f5e', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>Send</button>
